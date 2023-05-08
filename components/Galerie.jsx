@@ -1,12 +1,10 @@
-import React from 'react';
+import StyledSection from './StyledSection';
 
 const Galerie = () => {
 	return (
-		<section className="w-full" id="galerie">
-			<div className="h-96 w-full bg-blue-500">
-				<h2 className="">Galerie</h2>
-			</div>
-		</section>
+		<StyledSection propId="galerie">
+			<h1>Galerie</h1>
+		</StyledSection>
 	);
 };
 

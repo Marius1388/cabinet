@@ -5,13 +5,9 @@ import Link from 'next/link';
 const ScrollLink = ({ children, ...props }) => {
 	const handleScroll = (e) => {
 		e.preventDefault();
-		//remove everything before the hash
 		const targetId = e.currentTarget.href.replace(/.*\#/, '');
 		const elem = document.getElementById(targetId);
-		window.scrollTo({
-			top: elem?.getBoundingClientRect().top,
-			behavior: 'smooth',
-		});
+		elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
 	};
 	return (
 		<Link {...props} onClick={handleScroll}>

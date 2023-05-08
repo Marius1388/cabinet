@@ -1,12 +1,10 @@
-import React from 'react';
+import StyledSection from './StyledSection';
 
 const Servicii = () => {
 	return (
-		<section className="w-full" id="servicii">
-			<div className="h-96 w-full bg-red-500">
-				<h2 className="">Servicii</h2>
-			</div>
-		</section>
+		<StyledSection propId="servicii">
+			<h2 className="">Servicii</h2>
+		</StyledSection>
 	);
 };
 

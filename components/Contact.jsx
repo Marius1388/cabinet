@@ -1,10 +1,10 @@
+import StyledSection from './StyledSection';
+
 const Contact = () => {
 	return (
-		<section className="w-full" id="contact">
-			<div className="h-96 w-full bg-yellow-500">
-				<h2 className="">Contact</h2>
-			</div>
-		</section>
+		<StyledSection propId="contact">
+			<h2>Contact</h2>
+		</StyledSection>
 	);
 };
 
