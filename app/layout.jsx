@@ -1,5 +1,6 @@
-import { Children } from 'react';
-import '../styles/globals.css';
+import '@styles/globals.css';
+
+import Nav from '@/components/Nav';
 
 export const metadata = {
 	title: 'Cabinet stomatologic Dr. Roxana Dancea',
@@ -12,8 +13,11 @@ const RootLayout = ({ children }) => {
 			<body>
 				<div className="main">
 					<div className="gradient" />
-					<main className="app">{children}</main>
 				</div>
+				<main className="app">
+					<Nav />
+					{children}
+				</main>
 			</body>
 		</html>
 	);
