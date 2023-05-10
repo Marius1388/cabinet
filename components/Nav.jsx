@@ -7,7 +7,7 @@ const Nav = () => {
 	useEffect(() => {}, []);
 
 	return (
-		<nav className="sticky top-0 flex w-screen items-center justify-center bg-black py-3 text-white">
+		<nav className="sticky top-0 z-20 flex w-screen items-center justify-center bg-black py-3 text-white">
 			<div className="flex-between flex w-3/5 max-w-3xl items-center justify-center ">
 				<ScrollLink href="#despre-noi">Despre noi</ScrollLink>
 				<ScrollLink href="#servicii">Servicii</ScrollLink>

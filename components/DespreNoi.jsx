@@ -4,7 +4,7 @@ const DespreNoi = () => {
 	return (
 		<section className="flex-center w-full flex-col">
 			<h1 className="head_text text-center">
-				Cabinet Stomatologic Dr. Roxana Dancea
+				Cabinet Stomatologic <br /> Dr. Roxana Dancea
 			</h1>
 			<StyledSection propId="despre-noi">
 				<p className="desc text-center">

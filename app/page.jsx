@@ -13,7 +13,7 @@ import Contact from "@components/Contact";
 
 const Home = () => {
     return (
-			<div className="my-20">
+			<div className="my-20 w-5/6">
 				<DespreNoi />
 				<Servicii />
 				<Galerie />
