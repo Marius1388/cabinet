@@ -25,7 +25,7 @@ const list = [
 const Servicii = () => {
 	return (
 		<StyledSection propId="servicii">
-			<h2 className="green_gradient text-2xl font-bold ">Servicii</h2>
+			<h2 className="green_gradient text-3xl font-bold ">Servicii</h2>
 			{list.map((item, i) => (
 				<>
 					<div className="flex items-center justify-between">
@@ -39,8 +39,8 @@ const Servicii = () => {
 							background: 'lightgreen',
 							color: 'lime',
 							borderColor: 'lime',
-							height: '3px',
-							width: '95%',
+							height: '2px',
+							width: '85%',
 							margin: '0 auto',
 						}}
 					/>
