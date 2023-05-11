@@ -5,6 +5,9 @@ import Nav from '@/components/Nav';
 export const metadata = {
 	title: 'Cabinet stomatologic Dr. Roxana Dancea',
 	description: 'Cabinet stomatologic Dr. Roxana Dancea - Traian Vuia',
+	icons: {
+		icon: '/favicon.ico',
+	},
 };
 
 const RootLayout = ({ children }) => {

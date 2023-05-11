@@ -27,12 +27,14 @@ const Servicii = () => {
 		<StyledSection propId="servicii">
 			<h2 className="green_gradient text-3xl font-bold ">Servicii</h2>
 			{list.map((item, i) => (
-				<>
+				<div key={i}>
 					<div className="flex items-center justify-between">
-						<p key={i} className="desc w-1/3 text-center uppercase">
+						<p className="desc w-1/3 text-center font-semibold uppercase">
 							{item.name}
 						</p>
-						<p className="w-2/3">{item.description} </p>
+						<p className="w-2/3 text-lg font-normal">
+							{item.description}{' '}
+						</p>
 					</div>
 					<hr
 						style={{
@@ -44,7 +46,7 @@ const Servicii = () => {
 							margin: '0 auto',
 						}}
 					/>
-				</>
+				</div>
 			))}
 		</StyledSection>
 	);
