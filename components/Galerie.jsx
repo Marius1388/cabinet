@@ -46,7 +46,7 @@ const Galerie = () => {
 
 	return (
 		<StyledSection propId="galerie">
-			<h1>Galerie</h1>
+			<h2 className="green_gradient text-2xl font-bold ">Galerie</h2>
 			<Carousel sx={{ boxShadow: 0 }}>
 				{items.map((item, i) => {
 					return (

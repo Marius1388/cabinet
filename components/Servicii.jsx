@@ -25,9 +25,7 @@ const list = [
 const Servicii = () => {
 	return (
 		<StyledSection propId="servicii">
-			<h2 className="green_gradient text-2xl font-bold uppercase ">
-				Servicii
-			</h2>
+			<h2 className="green_gradient text-2xl font-bold ">Servicii</h2>
 			{list.map((item, i) => (
 				<>
 					<div className="flex items-center justify-between">
