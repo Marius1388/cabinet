@@ -2,13 +2,13 @@ import StyledSection from './StyledSection';
 
 const list = [
 	{
-		name: 'endodontie',
-		description: 'Tratamentul afectiunilor din interiorul dintelui',
+		name: 'endodonție',
+		description: 'Tratamentul afecțiunilor din interiorul dintelui',
 	},
 	{
-		name: 'protetica dentara',
+		name: 'protetică dentară',
 		description:
-			'Inlocuirea dintilor lipsa sau reabilitarea orala complexa a arcadelor dentare',
+			'Înlocuirea dinților lipsă sau reabilitarea orală complexă a arcadelor dentare',
 	},
 	{
 		name: 'profilaxie',
@@ -16,23 +16,37 @@ const list = [
 			'O serie de proceduri stomatologice care se fac pentru a preveni apariția problemelor stomatologice (detartrajul, periajul profesional, depistarea cariilor incipiente și evaluarea obturațiilor, sigilarea șanțurilor și fosetelor, fluorizarea dinților)',
 	},
 	{
-		name: 'albirea dentara',
+		name: 'albirea dentară',
 		description:
-			'Un procedeu prin care se redau dintilor ingalbeniti o culoare mai alba.',
+			'Un procedeu prin care se redau dinților îngălbeniți o culoare mai albă',
 	},
 ];
 
 const Servicii = () => {
 	return (
 		<StyledSection propId="servicii">
-			<h2 className="desc green_gradient font-bold uppercase ">Servicii</h2>
+			<h2 className="green_gradient text-2xl font-bold uppercase ">
+				Servicii
+			</h2>
 			{list.map((item, i) => (
-				<div className="align-center flex">
-					<p key={i} className="desc uppercase">
-						{item.name}{' '}
-					</p>
-					<p>{item.description} </p>
-				</div>
+				<>
+					<div className="flex items-center justify-between">
+						<p key={i} className="desc w-1/3 text-center uppercase">
+							{item.name}
+						</p>
+						<p className="w-2/3">{item.description} </p>
+					</div>
+					<hr
+						style={{
+							background: 'lightgreen',
+							color: 'lime',
+							borderColor: 'lime',
+							height: '3px',
+							width: '95%',
+							margin: '0 auto',
+						}}
+					/>
+				</>
 			))}
 		</StyledSection>
 	);
