@@ -10,7 +10,10 @@ const ScrollLink = ({ children, ...props }) => {
 		elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
 	};
 	return (
-		<Link {...props} onClick={handleScroll}>
+		<Link
+			{...props}
+			onClick={handleScroll}
+			className="max-sm:mx-1 max-sm:text-xs">
 			{children}
 		</Link>
 	);

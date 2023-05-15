@@ -13,7 +13,7 @@ const Contact = () => {
 		<StyledSection propId="contact">
 			<h2 className="green_gradient text-3xl font-bold ">Contact</h2>
 			<div className="mt-2 flex flex-col items-center justify-center md:flex-row md:justify-between ">
-				<div className="md:w-1/2">
+				<div className="md:w-1/2 ">
 					<p className="desc mt-3 text-center">
 						Ne găsiți în Traian Vuia, DN 68A,
 						<br /> nr. 31 &#128515;{' '}
@@ -28,12 +28,12 @@ const Contact = () => {
 					<p className="mt-2 text-center text-lg font-medium">
 						<PhoneIcon /> +4 0720 894 803
 					</p>
-					<div className="desc mt-3 flex flex-row flex-wrap items-center text-center">
+					<div className="desc mt-3 flex flex-row flex-wrap items-center text-center ">
 						<p className="w-3/4">
 							Sună-ne! &#8593;
 							<br /> Sau trimite-ne un mesaj accesând iconița &#8594;
 						</p>
-						<div className="align-bottom">
+						<div className="justify-endpb-0 mb-0 mt-auto h-full align-bottom">
 							<Formular />
 						</div>
 					</div>
