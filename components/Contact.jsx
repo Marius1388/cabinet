@@ -28,14 +28,14 @@ const Contact = () => {
 					<p className="mt-2 text-center text-lg font-medium">
 						<PhoneIcon /> +4 0720 894 803
 					</p>
-					<div className="desc mt-3 flex flex-row flex-wrap items-center text-center ">
-						<p className="w-3/4">
-							Sună-ne! &#8593;
-							<br /> Sau trimite-ne un mesaj accesând iconița &#8594;
-						</p>
-						<div className="justify-endpb-0 mb-0 mt-auto h-full align-bottom">
-							<Formular />
-						</div>
+					<p className="desc text-center">
+						Sună-ne! &#8593;
+						<br />
+						Sau trimite-ne un mesaj accesând
+					</p>
+					<div className="desc flex flex-row flex-wrap items-center justify-center text-center ">
+						<p>iconița &#8594;</p>
+						<Formular />
 					</div>
 				</div>
 				<div className="md:w-1/2">
