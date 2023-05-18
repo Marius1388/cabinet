@@ -20,6 +20,7 @@ const Formular = () => {
 	};
 
 	const handleClose = () => {
+		setAlert('');
 		setAnchorEl(null);
 	};
 
@@ -31,9 +32,7 @@ const Formular = () => {
 			setEmail('');
 			setPhone('');
 			setAlert('success');
-			handleClose();
 		} else {
-			// alert('Completeaza toate campurile');
 			setAlert('error');
 		}
 	};
@@ -68,7 +67,7 @@ const Formular = () => {
 						severity="success"
 						className='"fixed left-0 right-0 top-0'
 						onClose={() => setAlert('')}>
-						Felicitari! Vei primi un email de confirmare!
+						Felicitări! Vei primi un email de confirmare!
 					</Alert>
 				)}
 				{alert === 'error' && (
@@ -77,7 +76,7 @@ const Formular = () => {
 						severity="error"
 						className='"fixed left-0 right-0 top-0'
 						onClose={() => setAlert('')}>
-						Completeaza toate campurile!
+						Completează toate câmpurile!
 					</Alert>
 				)}
 				<Typography
@@ -99,7 +98,7 @@ const Formular = () => {
 					<TextField
 						type="email"
 						variant="outlined"
-						label="Adresa de mail"
+						label="Adresa de email"
 						className="mb-2"
 						onChange={(e) => setEmail(e.target.value)}
 						value={email}

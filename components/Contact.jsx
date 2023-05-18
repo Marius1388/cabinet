@@ -23,7 +23,7 @@ const Contact = () => {
 						Luni: 08.00-14.00
 					</p>
 					<p className="mt-2 text-center text-lg font-medium">
-						Vineri: 14.00-18.00
+						Joi: 14.00-18.00
 					</p>
 					<p className="mt-2 text-center text-lg font-medium">
 						<PhoneIcon /> +4 0720 894 803

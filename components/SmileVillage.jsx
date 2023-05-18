@@ -3,7 +3,7 @@ import StyledSection from './StyledSection';
 const SmileVillage = () => {
 	return (
 		<StyledSection propId="smileVillage">
-			<h2 className="">SmileVillage</h2>
+			<h2 className="green_gradient text-3xl font-bold ">SmileVillage</h2>
 		</StyledSection>
 	);
 };
