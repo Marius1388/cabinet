@@ -13,7 +13,7 @@ import Contact from '@components/Contact';
 
 const Home = () => {
 	return (
-		<div className="my-20 w-5/6">
+		<div className="my-20 w-5/6 max-sm:w-11/12">
 			<h1 className="head_text green_gradient pb-2 text-center">
 				SmileVillage
 			</h1>
