@@ -28,11 +28,11 @@ const Servicii = () => {
 			<h2 className="green_gradient text-3xl font-bold ">Servicii</h2>
 			{list.map((item, i) => (
 				<div key={i}>
-					<div className="flex items-center justify-between">
-						<p className="desc w-1/3 text-center font-semibold uppercase">
+					<div className="flex items-center justify-between max-sm:flex-col md:flex-row">
+						<p className="desc text-center font-semibold uppercase md:w-1/3">
 							{item.name}
 						</p>
-						<p className="w-2/3 text-lg font-normal">
+						<p className="text-lg font-normal max-sm:text-justify md:w-2/3">
 							{item.description}{' '}
 						</p>
 					</div>
