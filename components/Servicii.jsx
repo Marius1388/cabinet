@@ -3,7 +3,7 @@ import StyledSection from './StyledSection';
 const list = [
 	{
 		name: 'endodonție',
-		description: 'Tratamentul afecțiunilor din interiorul dintelui',
+		description: 'Tratamentul afecțiunilor dintelui',
 	},
 	{
 		name: 'protetică dentară',

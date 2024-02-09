@@ -24,14 +24,28 @@ const Formular = () => {
 		setAnchorEl(null);
 	};
 
-	const handleSubmit = (event) => {
+	const handleSubmit = async (event) => {
 		event.preventDefault();
 		if (name !== '' && email !== '' && phone !== '') {
-			console.log({ name, email, phone });
-			setName('');
-			setEmail('');
-			setPhone('');
-			setAlert('success');
+			// console.log({ name, email, phone });
+
+			try {
+				const data = { name, email, phone };
+
+				const res = await fetch('/api/contact', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(data),
+				});
+				setName('');
+				setEmail('');
+				setPhone('');
+				setAlert('success');
+			} catch (error) {
+				console.error('error:', error);
+			}
 		} else {
 			setAlert('error');
 		}
