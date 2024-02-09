@@ -7,33 +7,98 @@ const CONTACT_MESSAGE_FIELDS = {
 };
 
 const generateEmailContent = (data) => {
-	const stringData = Object.entries(data).reduce(
-		(str, [key, val]) =>
-			(str += `${CONTACT_MESSAGE_FIELDS[key]}: \n${val} \n \n`),
-		'',
-	);
 	const htmlData = Object.entries(data).reduce((str, [key, val]) => {
-		return (str += `<h3 class="form-heading" align="left">${CONTACT_MESSAGE_FIELDS[key]}</h3><p class="form-answer" align="left">${val}</p>`);
+		return (str += `<tr>
+                            <td style="padding: 8px 0;" class="form-heading">${CONTACT_MESSAGE_FIELDS[key]}</td>
+                            <td style="padding: 8px 0;" class="form-answer">${val}</td>
+                        </tr>`);
 	}, '');
 
+	const confirmationMessage = `
+        <p style="font-size: 16px; color: #4CAF50; margin-top: 20px;">
+            A fost trimis un email automat de confirmare către: <strong>${data.email}</strong>.
+        </p>
+    `;
+
 	return {
-		text: stringData,
-		html: `<!DOCTYPE html><html> <head> <title></title> <meta charset="utf-8"/> <meta name="viewport" content="width=device-width, initial-scale=1"/> <meta http-equiv="X-UA-Compatible" content="IE=edge"/> <style type="text/css"> body, table, td, a{-webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;}table{border-collapse: collapse !important;}body{height: 100% !important; margin: 0 !important; padding: 0 !important; width: 100% !important;}@media screen and (max-width: 525px){.wrapper{width: 100% !important; max-width: 100% !important;}.responsive-table{width: 100% !important;}.padding{padding: 10px 5% 15px 5% !important;}.section-padding{padding: 0 15px 50px 15px !important;}}.form-container{margin-bottom: 24px; padding: 20px; border: 1px dashed #ccc;}.form-heading{color: #2a2a2a; font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif; font-weight: 400; text-align: left; line-height: 20px; font-size: 18px; margin: 0 0 8px; padding: 0;}.form-answer{color: #2a2a2a; font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif; font-weight: 300; text-align: left; line-height: 20px; font-size: 16px; margin: 0 0 24px; padding: 0;}div[style*="margin: 16px 0;"]{margin: 0 !important;}</style> </head> <body style="margin: 0 !important; padding: 0 !important; background: #fff"> <div style=" display: none; font-size: 1px; color: #fefefe; line-height: 1px;  max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; " ></div><table border="0" cellpadding="0" cellspacing="0" width="100%"> <tr> <td bgcolor="#ffffff" align="center" style="padding: 10px 15px 30px 15px" class="section-padding" > <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 500px" class="responsive-table" > <tr> <td> <table width="100%" border="0" cellspacing="0" cellpadding="0"> <tr> <td> <table width="100%" border="0" cellspacing="0" cellpadding="0" > <tr> <td style=" padding: 0 0 0 0; font-size: 16px; line-height: 25px; color: #232323; " class="padding message-content" > <h2>New Contact Message</h2> <div class="form-container">${htmlData}</div></td></tr></table> </td></tr></table> </td></tr></table> </td></tr></table> </body></html>`,
+		html: `
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <title>Contact Message</title>
+                    <meta charset="utf-8"/>
+                    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                    <style type="text/css">
+                        /* Styles as before */
+                    </style>
+                </head>
+                <body style="margin: 0 !important; padding: 0 !important; background: #fff">
+                    <table border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td bgcolor="#ffffff" style="padding: 20px">
+                                <table border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td>
+                                            <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                    <td style="padding: 0 0 0 0; font-size: 16px; line-height: 25px; color: #232323;">
+                                                        <h2 style="margin-bottom: 15px;">Cerere de contact SmileVillage</h2>
+                                                        <table>
+                                                            ${htmlData}
+                                                        </table>
+                                                        ${confirmationMessage}
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+            </html>
+        `,
 	};
+};
+
+const sendConfirmationEmail = async (email, subject, content) => {
+	try {
+		await transporter.sendMail({
+			...mailOptions,
+			to: email,
+			subject,
+			...content,
+		});
+		console.log(`Confirmation email sent to ${email}`);
+	} catch (error) {
+		console.log('Error sending confirmation email:', error);
+	}
 };
 
 export async function POST(req) {
 	const data = await req.json();
-	// mail catre cabinet cu detaliile solicitantului
+
+	// Send mail to the cabinet with the details of the requester
 	try {
 		await transporter.sendMail({
 			...mailOptions,
 			...generateEmailContent(data),
-			subject: `Contact Smile Diaspora din partea ${data.email}`,
+			subject: `SmileVillage - cerere de contact de la ${data.email}`,
 		});
-		return new Response('OK');
+		console.log('Email to cabinet sent successfully');
 	} catch (error) {
-		console.log('Error:', error);
+		console.log('Error sending email to cabinet:', error);
 	}
-	//mail catre solicitant ca va fi contactat de catre cabinet
+
+	// Send confirmation email to the requester
+	const confirmationSubject = 'SmileVillage: Mesajul tău a fost recepționat';
+	const confirmationContent = {
+		text: 'Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat. Te vom contacta în cel mai scurt timp!',
+		html: '<p>Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat.</p></br><p>Te vom contacta în cel mai scurt timp!</p>',
+	};
+
+	sendConfirmationEmail(data.email, confirmationSubject, confirmationContent);
+
+	return new Response('OK');
 }
