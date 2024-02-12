@@ -2,7 +2,7 @@ import StyledSection from './StyledSection';
 
 const DespreNoi = () => {
 	return (
-		<section className="flex-center w-full flex-col">
+		<section className="flex-center mb-3 w-full flex-col">
 			<StyledSection propId="despre-noi">
 				<section className="flex-center w-full flex-col">
 					<p className="desc mt-10  text-justify indent-10">

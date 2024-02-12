@@ -1,4 +1,6 @@
 import { transporter, mailOptions } from '../../../utils/nodemailer';
+import axios from 'axios';
+import { NextResponse } from 'next/server';
 
 const CONTACT_MESSAGE_FIELDS = {
 	name: 'Nume',
@@ -6,8 +8,23 @@ const CONTACT_MESSAGE_FIELDS = {
 	phone: 'Telefon',
 };
 
+async function verifyCaptcha(token) {
+	const res = await axios.post(
+		`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.NEXT_PUBLIC_RECAPTCHA_SECRET_KEY}&response=${token}`,
+	);
+	if (res.data.success) {
+		return 'success';
+	} else {
+		throw new Error('Failed Captcha');
+	}
+}
 const generateEmailContent = (data) => {
-	const htmlData = Object.entries(data).reduce((str, [key, val]) => {
+	// Exclude 'token' or 'recaptchaValue' field from the email content
+	const filteredData = Object.entries(data).filter(
+		([key]) => key !== 'token' && key !== 'recaptchaValue',
+	);
+
+	const htmlData = filteredData.reduce((str, [key, val]) => {
 		return (str += `<tr>
                             <td style="padding: 8px 0;" class="form-heading">${CONTACT_MESSAGE_FIELDS[key]}</td>
                             <td style="padding: 8px 0;" class="form-answer">${val}</td>
@@ -73,32 +90,50 @@ const sendConfirmationEmail = async (email, subject, content) => {
 		console.log(`Confirmation email sent to ${email}`);
 	} catch (error) {
 		console.log('Error sending confirmation email:', error);
+		return;
 	}
 };
 
-export async function POST(req) {
-	const data = await req.json();
+export const POST = async (req) => {
+	if (req.method === 'POST') {
+		const data = await req.json();
 
-	// Send mail to the cabinet with the details of the requester
-	try {
-		await transporter.sendMail({
-			...mailOptions,
-			...generateEmailContent(data),
-			subject: `SmileVillage - cerere de contact de la ${data.email}`,
-		});
-		console.log('Email to cabinet sent successfully');
-	} catch (error) {
-		console.log('Error sending email to cabinet:', error);
+		try {
+			// Perform server-side reCAPTCHA verification
+			const captchaVerification = await verifyCaptcha(data.recaptchaValue);
+			if (captchaVerification !== 'success') {
+				throw new Error('Failed Captcha');
+			}
+
+			// Send mail to the cabinet with the details of the requester
+			await transporter.sendMail({
+				...mailOptions,
+				...generateEmailContent(data),
+				subject: `SmileVillage - cerere de contact de la ${data.email}`,
+			});
+			console.log('Email to cabinet sent successfully');
+
+			// Send confirmation email to the requester
+			await sendConfirmationEmail(
+				data.email,
+				'SmileVillage: Mesajul tău a fost recepționat',
+				{
+					text: 'Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat. Te vom contacta în cel mai scurt timp!',
+					html: '<p>Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat.</p></br><p>Te vom contacta în cel mai scurt timp!</p>',
+				},
+			);
+
+			return new NextResponse(200, {
+				message: 'Form submitted successfully',
+			});
+		} catch (error) {
+			console.error('Error processing form submission:', error);
+			return new NextResponse(500, {
+				error: 'Error processing form submission',
+				details: error.message || 'Unknown error',
+			});
+		}
+	} else {
+		return new NextResponse(405, { error: 'Method Not Allowed' });
 	}
-
-	// Send confirmation email to the requester
-	const confirmationSubject = 'SmileVillage: Mesajul tău a fost recepționat';
-	const confirmationContent = {
-		text: 'Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat. Te vom contacta în cel mai scurt timp!',
-		html: '<p>Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat.</p></br><p>Te vom contacta în cel mai scurt timp!</p>',
-	};
-
-	sendConfirmationEmail(data.email, confirmationSubject, confirmationContent);
-
-	return new Response('OK');
-}
+};
