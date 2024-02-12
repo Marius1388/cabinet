@@ -8,7 +8,7 @@ const DespreNoi = () => {
 					<p className="desc mt-10  text-justify indent-10">
 						Absolventă a Facultății de Medicină Dentară din cadrul
 						Universității de Medicină și Farmacie „Victor Babeș” din
-						Timișoara și o experiență de 10 ani în domeniu, dr. Roxana
+						Timișoara și cu o experiență de 10 ani în domeniu, dr. Roxana
 						Dancea administrează Cabinetul Stomatologic Traian Vuia, din
 						județul Timiș, înființat în anul 2023, cu ajutorul fondurilor
 						europene din Programul Național de Dezvoltare Rurală” (PNDR).
@@ -16,7 +16,8 @@ const DespreNoi = () => {
 						de endodonție (tratamente de canal), protetică (lucrări
 						dentare, proteze), estetică și implantologie (prin clinicele
 						partenere) și se adresează atât pacienților din comuna Traian
-						Vuia, cât și pacienților din Țara Făgetului.
+						Vuia, cât și pacienților din Țara Făgetului sau orice altă
+						zonă a țării.
 					</p>
 				</section>
 			</StyledSection>
