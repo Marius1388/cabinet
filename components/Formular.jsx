@@ -30,10 +30,14 @@ const Formular = () => {
 	};
 
 	const validatePhone = (phoneNumber) => {
-		// Common European phone number formats
-		const phoneRegex =
-			/^(?:(?:\+|00)44|0|\+32|0\s*[67]|0\s*1[0-9])\s*[1-9](?:\s*\d){8,14}$/;
-		return phoneRegex.test(phoneNumber);
+		// Regular expression for European phone numbers, including +40 country code
+		const europeRegex = /^\+(?:40)[1-9]\d{8}$/;
+
+		// Regular expression for US phone numbers, including country code and optional hyphens
+		const usRegex =
+			/^\+(?:1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]?[2-9]\d{2}[-.\s]?\d{4}$/;
+
+		return europeRegex.test(phoneNumber) || usRegex.test(phoneNumber);
 	};
 
 	const handleSubmit = async (event) => {
