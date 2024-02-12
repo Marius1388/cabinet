@@ -9,7 +9,6 @@ const Nav = () => {
 				<ScrollLink href="#despre-noi">Despre noi</ScrollLink>
 				<ScrollLink href="#servicii">Servicii</ScrollLink>
 				<ScrollLink href="#galerie">Galerie</ScrollLink>
-				<ScrollLink href="#smileVillage">SmileVillage</ScrollLink>
 				<ScrollLink href="#contact">Contact</ScrollLink>
 			</div>
 		</nav>

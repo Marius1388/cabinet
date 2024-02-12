@@ -8,7 +8,6 @@
 import DespreNoi from '@components/DespreNoi';
 import Servicii from '@components/Servicii';
 import Galerie from '@components/Galerie';
-import SmileVillage from '@components/SmileVillage';
 import Contact from '@components/Contact';
 
 const Home = () => {
