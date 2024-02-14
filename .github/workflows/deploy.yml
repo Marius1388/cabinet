@@ -16,7 +16,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 18.18.2  # Use the desired Node.js version
+          node-version: 20  # Use the desired Node.js version
 
       - name: Install dependencies and build Next.js app
         run: |
