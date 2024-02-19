@@ -8,7 +8,6 @@ import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import ReCAPTCHA from 'react-google-recaptcha';
 import axios from 'axios';
-import { useRouter } from 'next/router';
 
 const Formular = () => {
 	const [anchorEl, setAnchorEl] = useState(null);
@@ -30,14 +29,26 @@ const Formular = () => {
 	};
 
 	const validatePhone = (phoneNumber) => {
-		// Regular expression for European phone numbers, including +40 country code
-		const europeRegex = /^\+(?:40)[1-9]\d{8}$/;
+		// Regular expression for Romanian phone numbers, including +40 country code
+		const romaniaRegex = /^\+(?:40)?[1-9]\d{8}$/;
 
-		// Regular expression for US phone numbers, including country code and optional hyphens
-		const usRegex =
-			/^\+(?:1[-.\s]?)?\(?[2-9]\d{2}\)?[-.\s]?[2-9]\d{2}[-.\s]?\d{4}$/;
+		// Additional check for Romanian mobile numbers starting with '07'
+		const mobileRegex = /^07[2-8]\d{7}$/;
 
-		return europeRegex.test(phoneNumber) || usRegex.test(phoneNumber);
+		return romaniaRegex.test(phoneNumber) || mobileRegex.test(phoneNumber);
+	};
+
+	const validateEmail = (email) => {
+		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+		return emailRegex.test(email);
+	};
+
+	const resetForm = () => {
+		setName('');
+		setEmail('');
+		setPhone('');
+		setRecaptchaValue(null);
+		setIsVerified(false);
 	};
 
 	const handleSubmit = async (event) => {
@@ -65,6 +76,7 @@ const Formular = () => {
 
 				if (res.status === 200) {
 					setAlert('success');
+					resetForm();
 				} else {
 					setAlert('error');
 				}
@@ -167,7 +179,15 @@ const Formular = () => {
 						onChange={(e) => setPhone(e.target.value)}
 						value={phone}
 					/>
-					<Button className="mb-2" type="submit" disabled={!isVerified}>
+					<Button
+						className="mb-2"
+						type="submit"
+						disabled={
+							!isVerified ||
+							name === '' ||
+							!validateEmail(email) ||
+							!validatePhone(phone)
+						}>
 						Trimite
 					</Button>
 				</form>
