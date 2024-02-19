@@ -5,7 +5,7 @@
 	"scripts": {
 		"dev": "next dev",
 		"build": "next build",
-		"start": "next start",
+		"start": "npx babel-node server.js",
 		"lint": "next lint"
 	},
 	"dependencies": {
@@ -31,6 +31,11 @@
 		"uuid": "^9.0.1"
 	},
 	"devDependencies": {
+		"@babel/cli": "^7.23.9",
+		"@babel/core": "^7.23.9",
+		"@babel/node": "^7.23.9",
+		"@babel/preset-env": "^7.23.9",
+		"@babel/preset-react": "^7.23.3",
 		"prettier": "^2.8.8",
 		"prettier-plugin-tailwindcss": "^0.2.8"
 	}

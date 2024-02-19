@@ -96,11 +96,21 @@ const sendConfirmationEmail = async (email, subject, content) => {
 
 export const POST = async (req) => {
 	if (req.method === 'POST') {
-		const data = await req.json();
-
 		try {
+			const data = await req.text(); // Read the data from the ReadableStream
+
+			// Parse the data as JSON
+			const jsonData = JSON.parse(data);
+
+			// Check if 'recaptchaValue' is present in the jsonData
+			if (!jsonData.recaptchaValue) {
+				throw new Error('Missing recaptchaValue');
+			}
+
 			// Perform server-side reCAPTCHA verification
-			const captchaVerification = await verifyCaptcha(data.recaptchaValue);
+			const captchaVerification = await verifyCaptcha(
+				jsonData.recaptchaValue,
+			);
 			if (captchaVerification !== 'success') {
 				throw new Error('Failed Captcha');
 			}
@@ -108,14 +118,14 @@ export const POST = async (req) => {
 			// Send mail to the cabinet with the details of the requester
 			await transporter.sendMail({
 				...mailOptions,
-				...generateEmailContent(data),
-				subject: `SmileVillage - cerere de contact de la ${data.email}`,
+				...generateEmailContent(jsonData),
+				subject: `SmileVillage - cerere de contact de la ${jsonData.email}`,
 			});
 			console.log('Email to cabinet sent successfully');
 
 			// Send confirmation email to the requester
 			await sendConfirmationEmail(
-				data.email,
+				jsonData.email,
 				'SmileVillage: Mesajul tău a fost recepționat',
 				{
 					text: 'Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat. Te vom contacta în cel mai scurt timp!',

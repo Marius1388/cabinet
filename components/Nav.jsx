@@ -1,6 +1,6 @@
 'use client';
+import React from 'react';
 import ScrollLink from './ScrollLink';
-import { useState, useEffect } from 'react';
 
 const Nav = () => {
 	return (

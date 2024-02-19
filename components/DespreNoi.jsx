@@ -1,3 +1,4 @@
+import React from 'react';
 import StyledSection from './StyledSection';
 
 const DespreNoi = () => {

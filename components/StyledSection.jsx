@@ -1,3 +1,5 @@
+import React from 'react';
+
 const StyledSection = ({ children, propId }) => {
 	return (
 		<section className="mb-10 w-full" id={propId}>

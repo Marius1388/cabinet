@@ -1,9 +1,4 @@
-// o pagina home - detalii generale "despre noi"
-// poze Cabinet stomatologic Traian Vuia
-//  tratamente disponibile?!
-//Smile Diaspora - pachetul de turism medical
-//Contact -nr tel, adresa reala, adresa mail, adresa fb
-//buton de contacteaza-ne
+import React from 'react';
 
 import DespreNoi from '@components/DespreNoi';
 import Servicii from '@components/Servicii';
