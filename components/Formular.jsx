@@ -6,10 +6,12 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
 import ReCAPTCHA from 'react-google-recaptcha';
 import axios from 'axios';
 
 const Formular = () => {
+	const [loading, setLoading] = useState(false);
 	const [anchorEl, setAnchorEl] = useState(null);
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
@@ -55,6 +57,7 @@ const Formular = () => {
 		event.preventDefault();
 		if (name !== '' && email !== '' && phone !== '' && isVerified) {
 			try {
+				setLoading(true);
 				if (!recaptchaValue) {
 					console.error('reCAPTCHA verification failed');
 					setAlert('error');
@@ -77,12 +80,18 @@ const Formular = () => {
 				if (res.status === 200) {
 					setAlert('success');
 					resetForm();
+					setTimeout(() => {
+						setLoading(false);
+						handleClose();
+					}, 1000);
 				} else {
 					setAlert('error');
 				}
 			} catch (error) {
 				console.error('error:', error);
 				setAlert('error');
+			} finally {
+				setLoading(false);
 			}
 		} else {
 			setAlert('error');
@@ -105,6 +114,7 @@ const Formular = () => {
 				onClick={handleClick}>
 				<MailOutlineIcon fontSize="large" />
 			</IconButton>
+
 			<Popover
 				id={id}
 				open={open}
@@ -142,11 +152,13 @@ const Formular = () => {
 						Numărul de telefon nu este valid!
 					</Alert>
 				)}
+
 				<Typography
 					sx={{ p: 2 }}
 					className="desc text-center font-semibold">
 					Introdu datele tale
 				</Typography>
+
 				<form
 					className="mx-3 flex flex-col justify-center"
 					onSubmit={handleSubmit}>
@@ -186,9 +198,10 @@ const Formular = () => {
 							!isVerified ||
 							name === '' ||
 							!validateEmail(email) ||
-							!validatePhone(phone)
+							!validatePhone(phone) ||
+							loading
 						}>
-						Trimite
+						Trimite {loading && <CircularProgress />}
 					</Button>
 				</form>
 			</Popover>
