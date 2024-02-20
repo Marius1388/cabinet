@@ -78,10 +78,10 @@ const Formular = () => {
 				});
 
 				if (res.status === 200) {
+					setLoading(false);
 					setAlert('success');
 					resetForm();
 					setTimeout(() => {
-						setLoading(false);
 						handleClose();
 					}, 1000);
 				} else {
@@ -90,12 +90,13 @@ const Formular = () => {
 			} catch (error) {
 				console.error('error:', error);
 				setAlert('error');
-			} finally {
 				setLoading(false);
 			}
 		} else {
 			setAlert('error');
+			setLoading(false);
 		}
+		setLoading(false);
 	};
 
 	const handleCaptchaSubmission = (token) => {
