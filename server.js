@@ -1,39 +1,37 @@
-// server.js
-const { createServer } = require('http');
+require('dotenv').config({ path: '.env.local' });
 const { parse } = require('url');
 const next = require('next');
-const contactHandler = require('./app/api/contact/route'); // Update the path accordingly
+const express = require('express'); // Add Express
+const bodyParser = require('body-parser');
+const contactHandler = require('./app/api/contact/route');
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const app = next({ dev });
+const handle = app.getRequestHandler();
 const port = process.env.PORT || 3000;
 
-const app = next({ dev, hostname, port });
-const handle = app.getRequestHandler();
-
 app.prepare().then(() => {
-	createServer(async (req, res) => {
-		try {
-			const parsedUrl = parse(req.url, true);
-			const { pathname, query } = parsedUrl;
+	const server = express();
 
-			if (pathname === '/a') {
-				await app.render(req, res, '/a', query);
-			} else if (pathname === '/b') {
-				await app.render(req, res, '/b', query);
-			} else if (pathname === '/api/contact' && req.method === 'POST') {
-				// Use the contactHandler for the /api/contact route
-				await contactHandler.POST(req, res);
-			} else {
-				await handle(req, res, parsedUrl);
-			}
+	server.use(bodyParser.json());
+	server.use(bodyParser.urlencoded({ extended: true }));
+
+	server.post('/api/contact', async (req, res) => {
+		try {
+			await contactHandler.POST(req, res);
 		} catch (err) {
-			console.error('Error occurred handling', req.url, err);
-			res.statusCode = 500;
-			res.end('internal server error');
+			console.error('Error occurred handling /api/contact', err);
+			res.status(500).json({ error: 'Internal server error' });
 		}
-	}).listen(port, (err) => {
+	});
+
+	server.all('*', (req, res) => {
+		const parsedUrl = parse(req.url, true);
+		return handle(req, res, parsedUrl);
+	});
+
+	server.listen(port, (err) => {
 		if (err) throw err;
-		console.log(`> Ready on http://${hostname}:${port}`);
+		console.log(`> Ready on http://localhost:${port}`);
 	});
 });

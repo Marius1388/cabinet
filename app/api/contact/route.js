@@ -1,6 +1,7 @@
-import { transporter, mailOptions } from '../../../utils/nodemailer';
-import axios from 'axios';
-import { NextResponse } from 'next/server';
+const { transporter, mailOptions } = require('../../../utils/nodemailer');
+const axios = require('axios');
+const { NextResponse } = require('next/server');
+require('dotenv').config({ path: '.env.local' });
 
 const CONTACT_MESSAGE_FIELDS = {
 	name: 'Nume',
@@ -94,13 +95,18 @@ const sendConfirmationEmail = async (email, subject, content) => {
 	}
 };
 
-export const POST = async (req) => {
+module.exports.POST = async (req) => {
 	if (req.method === 'POST') {
 		try {
-			const data = await req.text(); // Read the data from the ReadableStream
+			let jsonData;
 
-			// Parse the data as JSON
-			const jsonData = JSON.parse(data);
+			if (process.env.NODE_ENV === 'development') {
+				// Use .text() approach in development
+				jsonData = JSON.parse(await req.text());
+			} else {
+				// Use req.body directly in production
+				jsonData = req.body;
+			}
 
 			// Check if 'recaptchaValue' is present in the jsonData
 			if (!jsonData.recaptchaValue) {
