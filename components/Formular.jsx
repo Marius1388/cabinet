@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react';
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
 import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -55,48 +57,54 @@ const Formular = () => {
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		if (name !== '' && email !== '' && phone !== '' && isVerified) {
-			try {
-				setLoading(true);
-				if (!recaptchaValue) {
-					console.error('reCAPTCHA verification failed');
-					setAlert('error');
-					return;
-				}
-				if (!validatePhone(phone)) {
-					console.error('Invalid phone number');
-					setAlert('phone');
-					return;
-				}
 
-				const data = { name, email, phone, recaptchaValue };
+		try {
+			setLoading(true);
 
-				const res = await axios.post('/api/contact', data, {
+			if (name === '' || email === '' || phone === '' || !isVerified) {
+				setAlert('error');
+				return;
+			}
+
+			if (!recaptchaValue) {
+				console.error('reCAPTCHA verification failed');
+				setAlert('error');
+				return;
+			}
+
+			if (!validatePhone(phone)) {
+				console.error('Invalid phone number');
+				setAlert('phone');
+				return;
+			}
+
+			const data = { name, email, phone, recaptchaValue };
+
+			const res = await axios
+				.post('/api/contact', data, {
 					headers: {
 						'Content-Type': 'application/json',
 					},
+				})
+				.catch((error) => {
+					console.error('Axios request failed:', error);
+					throw error; // Rethrow the error to propagate it further
 				});
 
-				if (res.status === 200) {
-					setLoading(false);
-					setAlert('success');
-					resetForm();
-					setTimeout(() => {
-						handleClose();
-					}, 1000);
-				} else {
-					setAlert('error');
-				}
-			} catch (error) {
-				console.error('error:', error);
+			if (res.status === 200) {
+				setAlert('success');
+				resetForm();
+				setTimeout(() => handleClose(), 1000);
+			} else {
+				console.error('Server error:', res.status);
 				setAlert('error');
-				setLoading(false);
 			}
-		} else {
+		} catch (error) {
+			console.error('Client-side error:', error);
 			setAlert('error');
+		} finally {
 			setLoading(false);
 		}
-		setLoading(false);
 	};
 
 	const handleCaptchaSubmission = (token) => {
@@ -200,9 +208,12 @@ const Formular = () => {
 							name === '' ||
 							!validateEmail(email) ||
 							!validatePhone(phone) ||
-							loading
+							loading === true
 						}>
-						Trimite {loading && <CircularProgress />}
+						Trimite{' '}
+						{loading === true && (
+							<CircularProgress sx={{ marginLeft: 2 }} />
+						)}
 					</Button>
 				</form>
 			</Popover>

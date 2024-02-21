@@ -9,6 +9,8 @@ const CONTACT_MESSAGE_FIELDS = {
 	phone: 'Telefon',
 };
 
+module.exports.dynamic = 'force-dynamic';
+
 async function verifyCaptcha(token) {
 	const res = await axios.post(
 		`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.NEXT_PUBLIC_RECAPTCHA_SECRET_KEY}&response=${token}`,
@@ -95,7 +97,7 @@ const sendConfirmationEmail = async (email, subject, content) => {
 	}
 };
 
-module.exports.POST = async (req) => {
+module.exports.POST = async (req, res) => {
 	if (req.method === 'POST') {
 		try {
 			let jsonData;
@@ -138,10 +140,15 @@ module.exports.POST = async (req) => {
 					html: '<p>Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat.</p></br><p>Te vom contacta în cel mai scurt timp!</p>',
 				},
 			);
-
-			return new NextResponse(200, {
-				message: 'Form submitted successfully',
-			});
+			if (process.env.NODE_ENV === 'development') {
+				// Use .text() approach in development
+				return new NextResponse(200, {
+					message: 'Form submitted successfully',
+				});
+			} else {
+				// Use req.body directly in production
+				res.status(200).send('Form submitted successfully');
+			}
 		} catch (error) {
 			console.error('Error processing form submission:', error);
 			return new NextResponse(500, {
