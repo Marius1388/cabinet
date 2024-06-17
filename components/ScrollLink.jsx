@@ -8,7 +8,13 @@ const ScrollLink = ({ children, ...props }) => {
 		e.preventDefault();
 		const targetId = e.currentTarget.href.replace(/.*\#/, '');
 		const elem = document.getElementById(targetId);
-		elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		const offset = 80; // Adjust this value as needed to offset for your fixed navbar
+		const elemPosition =
+			elem.getBoundingClientRect().top + window.pageYOffset;
+		window.scrollTo({
+			top: elemPosition - offset,
+			behavior: 'smooth',
+		});
 	};
 	return (
 		<Link

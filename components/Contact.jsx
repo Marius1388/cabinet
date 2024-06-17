@@ -27,7 +27,11 @@ const Contact = () => {
 						Joi: 14.00-18.00
 					</p>
 					<p className="mt-2 text-center text-lg font-medium">
-						<PhoneIcon /> +4 0720 894 803
+						<a
+							href="tel:+40720894803"
+							className="flex items-center justify-center">
+							<PhoneIcon /> +4 0720 894 803
+						</a>
 					</p>
 					<p className="desc text-center">
 						Sună-ne! &#8593;
