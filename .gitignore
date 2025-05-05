@@ -10,6 +10,9 @@
 
 # next.js
 /.next/
+
+# Optional: Any zip files you created manually
+*.zip
 /out/
 
 # production
