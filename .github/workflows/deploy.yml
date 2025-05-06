@@ -24,7 +24,59 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y lftp
 
-      - name: Create .env.local file with environment variables
+      - name: Create config directory and envConfig.js
+        run: |
+          mkdir -p config
+          cat > config/envConfig.js << 'EOL'
+          // This approach loads API keys from environment variables at runtime,
+          // but provides fallbacks for when environment variables fail in production
+          export function getGoogleMapsApiKey() {
+            // First try environment variable
+            if (process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY) {
+              return process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY;
+            }
+            
+            // For production fallback, retrieve from window object if set
+            if (typeof window !== 'undefined' && window._env && window._env.MAPS_API_KEY) {
+              return window._env.MAPS_API_KEY;
+            }
+            
+            // Log the issue but don't provide an actual key
+            console.error('Google Maps API key not available');
+            return '';
+          }
+
+          export function getRecaptchaSiteKey() {
+            // First try environment variable
+            if (process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY) {
+              return process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY;
+            }
+            
+            // For production fallback, retrieve from window object if set
+            if (typeof window !== 'undefined' && window._env && window._env.RECAPTCHA_SITE_KEY) {
+              return window._env.RECAPTCHA_SITE_KEY;
+            }
+            
+            // Log the issue but don't provide an actual key
+            console.error('reCAPTCHA site key not available');
+            return '';
+          }
+          EOL
+
+      - name: Create public directory if it doesn't exist
+        run: mkdir -p public
+
+      - name: Create runtime-config.js
+        run: |
+          cat > public/runtime-config.js << 'EOL'
+          // Runtime configuration for environment variables
+          window._env = {
+            MAPS_API_KEY: "${{ secrets.GOOGLE_MAPS_API_KEY }}",
+            RECAPTCHA_SITE_KEY: "${{ secrets.RECAPTCHA_SITE_KEY }}"
+          };
+          EOL
+
+      - name: Create .env.local file for build only
         run: |
           echo "Creating .env.local file..."
           cat > .env.local << 'EOL'
@@ -139,24 +191,6 @@ jobs:
           </FilesMatch>
           EOL
 
-      - name: Create .env.example file
-        run: |
-          echo "Creating .env.example file..."
-          cat > .env.example << 'EOL'
-          # .env.example - Do not put real values here!
-          # This file serves as a template for local development.
-          # In cPanel, set these values in the Node.js app environment variables section.
-
-          # Public variables (safe to be in client-side code)
-          NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
-          NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY=your_google_maps_api_key
-
-          # Private server-side only variables (never expose these)
-          NEXT_PUBLIC_RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
-          EMAIL=your_email@domain.com
-          EMAIL_PASS=your_email_password
-          EOL
-
       - name: Update package.json scripts
         run: |
           echo "Updating package.json scripts..."
@@ -171,9 +205,7 @@ jobs:
             distDir: '.next',
             // Keep these compiler options for better debugging
             compiler: {
-              removeConsole: {
-                exclude: ['log', 'error', 'warn'],
-              },
+              removeConsole: false, // Keep all console logs for debugging
             },
             // Add cache configuration to prevent cache-related issues
             headers: async () => {
@@ -213,49 +245,6 @@ jobs:
           };
           
           module.exports = nextConfig;
-          EOL
-
-      - name: Create .gitignore file
-        run: |
-          echo "Creating .gitignore file..."
-          cat > .gitignore << 'EOL'
-          # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-          # dependencies
-          /node_modules
-          /.pnp
-          .pnp.js
-
-          # testing
-          /coverage
-
-          # next.js
-          /.next/
-          /out/
-
-          # production
-          /build
-
-          # misc
-          .DS_Store
-          *.pem
-
-          # debug
-          npm-debug.log*
-          yarn-debug.log*
-          yarn-error.log*
-
-          # local env files
-          .env*.local
-          .env
-          .env.production
-
-          # vercel
-          .vercel
-
-          # typescript
-          *.tsbuildinfo
-          next-env.d.ts
           EOL
 
       - name: Install dependencies and build Next.js app

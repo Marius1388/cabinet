@@ -15,6 +15,9 @@ export const metadata = {
 const RootLayout = ({ children }) => {
 	return (
 		<html lang="ro">
+			<head>
+				<Script src="/runtime-config.js" strategy="beforeInteractive" />
+			</head>
 			<body>
 				<div className="main">
 					<div className="gradient" />

@@ -11,6 +11,7 @@ import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import ReCAPTCHA from 'react-google-recaptcha';
 import axios from 'axios';
+import { getRecaptchaSiteKey } from '@/config/envConfig';
 
 const Formular = () => {
 	const [loading, setLoading] = useState(false);
@@ -22,14 +23,18 @@ const Formular = () => {
 	const recaptchaRef = useRef(null);
 	const [recaptchaValue, setRecaptchaValue] = useState(null);
 	const [isVerified, setIsVerified] = useState(false);
-	// Track if we're in the browser environment
 	const [isBrowser, setIsBrowser] = useState(false);
-	// Track submission attempts
 	const [submissionAttempts, setSubmissionAttempts] = useState(0);
 
 	// Set isBrowser to true once component mounts
 	useEffect(() => {
 		setIsBrowser(true);
+		console.log('Formular component mounted');
+		// Log reCAPTCHA key status for debugging
+		console.log(
+			'reCAPTCHA key available:',
+			getRecaptchaSiteKey() ? 'Yes' : 'No',
+		);
 	}, []);
 
 	const handleClick = (event) => {
@@ -182,20 +187,8 @@ const Formular = () => {
 		);
 	}
 
-	// Get recaptcha key with fallback
-	const getRecaptchaKey = () => {
-		// First try to get from environment
-		if (process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY) {
-			return process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY;
-		}
-
-		// Log for debugging
-		console.log(
-			'Environment variable NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY not found, using fallback',
-		);
-
-		return '6LcaSm0pAAAAABidBhcUHK2IbWCHU47pHfT9Zile'; // Replace with your actual key
-	};
+	// Get recaptcha key
+	const recaptchaKey = getRecaptchaSiteKey();
 
 	return (
 		<div>
@@ -253,16 +246,15 @@ const Formular = () => {
 				<form
 					className="mx-3 flex flex-col justify-center"
 					onSubmit={handleSubmit}>
-					{recaptchaKey && (
+					{recaptchaKey ? (
 						<ReCAPTCHA
-							sitekey={getRecaptchaKey()}
+							sitekey={recaptchaKey}
 							ref={recaptchaRef}
 							onChange={handleCaptchaSubmission}
 						/>
-					)}
-					{!recaptchaKey && (
+					) : (
 						<Alert variant="outlined" severity="warning" className="mb-2">
-							reCAPTCHA key missing
+							reCAPTCHA key missing. Contact administrators.
 						</Alert>
 					)}
 					<TextField
