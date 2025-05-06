@@ -1,7 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import ScrollLink from './ScrollLink';
-// Removed: import Image from 'next/image';
 
 const Nav = () => {
 	const [isScrolled, setIsScrolled] = useState(false);
@@ -34,17 +33,24 @@ const Nav = () => {
 		setIsMobileMenuOpen(false);
 	};
 
-	// --- Class definitions (same as before) ---
+	// Class definitions with blur and gradient effects
 	const navBaseClasses =
 		'fixed left-0 right-0 top-0 z-20 transition-all duration-350 ease-in-out';
+
+	// Use backdrop-filter for blur effect when scrolled with a subtle gradient
 	const navScrolledClasses =
-		'bg-backgroundColor-light py-2 shadow-lg border-b border-gray-200';
+		'py-2 shadow-lg border-b border-gray-200 bg-gradient-to-r from-white/80 via-white/85 to-white/80 backdrop-filter backdrop-blur-md';
+
+	// For initial state, use a gradient with blur
 	const navInitialClasses =
-		'bg-gradient-to-b from-black/50 via-black/30 to-transparent py-4';
+		'py-4 bg-gradient-to-b from-black/60 via-black/40 to-transparent backdrop-filter backdrop-blur-sm';
+
 	const linkBaseClasses = 'nav_link transition-colors duration-300';
 	const linkScrolledClasses = 'text-textColor-primary hover:text-primary';
 	const linkInitialClasses = 'text-white hover:text-gray-200';
+
 	const logoTextColor = isScrolled ? 'text-primary' : 'text-white';
+
 	const ctaBaseClasses =
 		'btn rounded-full px-5 py-2 transition-all duration-300';
 	const ctaScrolledClasses = 'bg-primary text-white hover:bg-primary-dark';
@@ -58,24 +64,20 @@ const Nav = () => {
 			}`}
 			aria-label="Main Navigation">
 			<div className="container mx-auto flex items-center justify-between px-4">
-				{/* Logo (Text-Based) */}
+				{/* Logo */}
 				<ScrollLink
-					href="#top" // Links to the top - ensure you have an element with id="top" or change to "/"
+					href="#top"
 					className="flex items-center"
 					onClick={closeMobileMenu}
-					aria-label="SmileVillage Home" // Added aria-label for clarity
-				>
-					{/* Removed the Image component here */}
+					aria-label="SmileVillage Home">
 					<span
 						className={`font-montserrat text-2xl font-bold transition-colors duration-300 sm:text-3xl ${logoTextColor}`}>
-						{/* Slightly increased size (text-2xl sm:text-3xl) */}
 						SmileVillage
 					</span>
 				</ScrollLink>
 
 				{/* Desktop Navigation */}
 				<div className="hidden items-center space-x-1 md:flex md:space-x-4 lg:space-x-6">
-					{/* Links remain the same as previous version */}
 					<ScrollLink
 						href="#despre-noi"
 						className={`${linkBaseClasses} ${
@@ -108,7 +110,6 @@ const Nav = () => {
 
 				{/* Mobile Menu Button */}
 				<div className="md:hidden">
-					{/* Button remains the same as previous version */}
 					<button
 						onClick={toggleMobileMenu}
 						className={`rounded p-2 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
@@ -150,7 +151,6 @@ const Nav = () => {
 			{/* Mobile Menu */}
 			<div
 				id="mobile-menu"
-				// Mobile menu structure remains the same as previous version
 				className={`duration-350 overflow-hidden bg-white transition-all ease-in-out md:hidden ${
 					isMobileMenuOpen ? 'max-h-80 shadow-md' : 'max-h-0'
 				}`}>
