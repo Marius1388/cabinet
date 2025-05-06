@@ -4,6 +4,8 @@ import '@styles/globals.css';
 import Nav from '@/components/Nav';
 import Footer from '@components/Footer';
 
+import Script from 'next/script';
+
 export const metadata = {
 	title: 'Cabinet stomatologic Dr. Roxana Dancea',
 	description: 'Cabinet stomatologic Dr. Roxana Dancea - Traian Vuia',
