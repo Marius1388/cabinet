@@ -183,10 +183,19 @@ const Formular = () => {
 	}
 
 	// Get recaptcha key with fallback
-	const recaptchaKey =
-		process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY ||
-		process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
-		'';
+	const getRecaptchaKey = () => {
+		// First try to get from environment
+		if (process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY) {
+			return process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY;
+		}
+
+		// Log for debugging
+		console.log(
+			'Environment variable NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY not found, using fallback',
+		);
+
+		return '6LcaSm0pAAAAABidBhcUHK2IbWCHU47pHfT9Zile'; // Replace with your actual key
+	};
 
 	return (
 		<div>
@@ -246,7 +255,7 @@ const Formular = () => {
 					onSubmit={handleSubmit}>
 					{recaptchaKey && (
 						<ReCAPTCHA
-							sitekey={recaptchaKey}
+							sitekey={getRecaptchaKey()}
 							ref={recaptchaRef}
 							onChange={handleCaptchaSubmission}
 						/>

@@ -6,8 +6,19 @@ import Formular from '@components/Formular';
 import StyledSection from './StyledSection';
 
 const Contact = () => {
-	const { isLoaded } = useLoadScript({
-		googleMapsApiKey: process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY,
+	const getGoogleMapsApiKey = () => {
+		if (process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY) {
+			return process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY;
+		}
+		console.log(
+			'Environment variable NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY not found, using fallback',
+		);
+
+		return 'AIzaSyB2xE6z0wXkvRqDuVVkDbUFiM9YyOR7IfM';
+	};
+
+	const { isLoaded, loadError } = useLoadScript({
+		googleMapsApiKey: getGoogleMapsApiKey(),
 	});
 	const center = { lat: 45.7974016, lng: 22.0669081 };
 	return (
