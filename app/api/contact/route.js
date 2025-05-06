@@ -1,7 +1,7 @@
-const { transporter, mailOptions } = require('../../../utils/nodemailer');
-const axios = require('axios');
-const { NextResponse } = require('next/server');
-require('dotenv').config({ path: '.env.local' });
+// app/api/contact/route.js
+import { transporter, mailOptions } from '../../../utils/nodemailer';
+import axios from 'axios';
+import { NextResponse } from 'next/server';
 
 const CONTACT_MESSAGE_FIELDS = {
 	name: 'Nume',
@@ -9,18 +9,26 @@ const CONTACT_MESSAGE_FIELDS = {
 	phone: 'Telefon',
 };
 
-module.exports.dynamic = 'force-dynamic';
+// Use these export options to ensure proper handling in production
+export const dynamic = 'force-dynamic'; // Important for cPanel to prevent stale responses
+export const runtime = 'nodejs'; // Explicitly set Node.js runtime
 
 async function verifyCaptcha(token) {
-	const res = await axios.post(
-		`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.NEXT_PUBLIC_RECAPTCHA_SECRET_KEY}&response=${token}`,
-	);
-	if (res.data.success) {
-		return 'success';
-	} else {
-		throw new Error('Failed Captcha');
+	try {
+		const res = await axios.post(
+			`https://www.google.com/recaptcha/api/siteverify?secret=${process.env.NEXT_PUBLIC_RECAPTCHA_SECRET_KEY}&response=${token}`,
+		);
+		if (res.data.success) {
+			return 'success';
+		} else {
+			throw new Error('Failed Captcha');
+		}
+	} catch (error) {
+		console.error('Captcha verification error:', error);
+		throw new Error('Failed Captcha: ' + (error.message || 'Unknown error'));
 	}
 }
+
 const generateEmailContent = (data) => {
 	// Exclude 'token' or 'recaptchaValue' field from the email content
 	const filteredData = Object.entries(data).filter(
@@ -91,47 +99,96 @@ const sendConfirmationEmail = async (email, subject, content) => {
 			...content,
 		});
 		console.log(`Confirmation email sent to ${email}`);
+		return true;
 	} catch (error) {
-		console.log('Error sending confirmation email:', error);
-		return;
+		console.error('Error sending confirmation email:', error);
+		return false;
 	}
 };
 
-module.exports.POST = async (req, res) => {
-	if (req.method === 'POST') {
+// Updated handler with better error handling for cPanel deployment
+export async function POST(req) {
+	console.log('Processing contact form submission...');
+
+	try {
+		// Unified approach to parse request data
+		let jsonData;
 		try {
-			let jsonData;
-
-			if (process.env.NODE_ENV === 'development') {
-				// Use .text() approach in development
-				jsonData = JSON.parse(await req.text());
-			} else {
-				// Use req.body directly in production
-				jsonData = req.body;
+			console.log('Attempting to parse request as JSON...');
+			jsonData = await req.json();
+			console.log(
+				'Successfully parsed JSON data:',
+				JSON.stringify(jsonData),
+			);
+		} catch (error) {
+			console.error('JSON parsing failed, trying text parsing...');
+			const text = await req.text();
+			try {
+				jsonData = JSON.parse(text);
+				console.log(
+					'Successfully parsed text data as JSON:',
+					JSON.stringify(jsonData),
+				);
+			} catch (innerError) {
+				console.error('Failed to parse request data:', innerError);
+				return NextResponse.json(
+					{ error: 'Invalid request format' },
+					{ status: 400 },
+				);
 			}
+		}
 
-			// Check if 'recaptchaValue' is present in the jsonData
-			if (!jsonData.recaptchaValue) {
-				throw new Error('Missing recaptchaValue');
-			}
+		// Validate recaptcha
+		if (!jsonData.recaptchaValue) {
+			console.error('Missing recaptchaValue in request');
+			return NextResponse.json(
+				{ error: 'Missing recaptchaValue' },
+				{ status: 400 },
+			);
+		}
 
-			// Perform server-side reCAPTCHA verification
+		// Perform server-side reCAPTCHA verification
+		try {
+			console.log('Verifying reCAPTCHA...');
 			const captchaVerification = await verifyCaptcha(
 				jsonData.recaptchaValue,
 			);
 			if (captchaVerification !== 'success') {
-				throw new Error('Failed Captcha');
+				console.error('reCAPTCHA verification failed');
+				return NextResponse.json(
+					{ error: 'Failed Captcha verification' },
+					{ status: 400 },
+				);
 			}
+			console.log('reCAPTCHA verification successful');
+		} catch (error) {
+			console.error('Captcha verification error:', error);
+			return NextResponse.json(
+				{ error: 'Captcha verification failed: ' + error.message },
+				{ status: 400 },
+			);
+		}
 
-			// Send mail to the cabinet with the details of the requester
+		// Send mail to the cabinet with the details of the requester
+		try {
+			console.log('Sending email to cabinet...');
 			await transporter.sendMail({
 				...mailOptions,
 				...generateEmailContent(jsonData),
 				subject: `SmileVillage - cerere de contact de la ${jsonData.email}`,
 			});
 			console.log('Email to cabinet sent successfully');
+		} catch (error) {
+			console.error('Error sending email to cabinet:', error);
+			return NextResponse.json(
+				{ error: 'Failed to send email to cabinet: ' + error.message },
+				{ status: 500 },
+			);
+		}
 
-			// Send confirmation email to the requester
+		// Send confirmation email to the requester
+		try {
+			console.log('Sending confirmation email to user...');
 			await sendConfirmationEmail(
 				jsonData.email,
 				'SmileVillage: Mesajul tău a fost recepționat',
@@ -140,23 +197,26 @@ module.exports.POST = async (req, res) => {
 					html: '<p>Îți mulțumim că ne-ai contactat. Mesajul tău a fost recepționat.</p></br><p>Te vom contacta în cel mai scurt timp!</p>',
 				},
 			);
-			if (process.env.NODE_ENV === 'development') {
-				// Use .text() approach in development
-				return new NextResponse(200, {
-					message: 'Form submitted successfully',
-				});
-			} else {
-				// Use req.body directly in production
-				res.status(200).send('Form submitted successfully');
-			}
+			console.log('Confirmation email sent successfully');
 		} catch (error) {
-			console.error('Error processing form submission:', error);
-			return new NextResponse(500, {
+			console.error('Error sending confirmation email:', error);
+			// Continue even if confirmation email fails
+		}
+
+		// Return success response
+		console.log('Form submission processed successfully');
+		return NextResponse.json(
+			{ message: 'Form submitted successfully' },
+			{ status: 200 },
+		);
+	} catch (error) {
+		console.error('Error processing form submission:', error);
+		return NextResponse.json(
+			{
 				error: 'Error processing form submission',
 				details: error.message || 'Unknown error',
-			});
-		}
-	} else {
-		return new NextResponse(405, { error: 'Method Not Allowed' });
+			},
+			{ status: 500 },
+		);
 	}
-};
+}

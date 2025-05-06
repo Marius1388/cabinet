@@ -65,7 +65,7 @@ const Home = () => {
 		<>
 			{/* Hero Section */}
 			<div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 pt-20">
-				<div className="absolute inset-0 z-0 bg-[url('/assets/images/dental-bg.jpg')] bg-cover bg-center opacity-10"></div>
+				<div className="absolute inset-0 z-0 bg-[url('/assets/images/dental-bg.jpg')] bg-cover bg-center opacity-25"></div>
 				<div className="container mx-auto px-4 text-center">
 					<h1 className="head_text green_gradient mb-4 animate-fade-in">
 						SmileVillage
@@ -78,15 +78,20 @@ const Home = () => {
 						profesionalism pentru un zâmbet sănătos.
 					</p>
 					<div className="flex justify-center space-x-4">
-						<a href="#despre-noi" className="btn-primary animate-fade-in">
+						<a
+							href="#despre-noi"
+							className="btn btn-primary animate-fade-in">
 							Despre noi
 						</a>
-						<a href="#contact" className="btn-outline animate-fade-in">
+						<a
+							href="#contact"
+							className="btn btn-outline animate-fade-in">
 							Programare
 						</a>
 					</div>
 				</div>
-				<div className="absolute bottom-10 -translate-x-1/2 animate-bounce-slow">
+				{/* Fixed the bottom position and added responsive classes to hide on small screens */}
+				<div className="absolute bottom-24 hidden -translate-x-1/2 animate-bounce-slow sm:bottom-10 sm:block">
 					<a
 						href="#despre-noi"
 						className="flex flex-col items-center text-gray-500 hover:text-primary">

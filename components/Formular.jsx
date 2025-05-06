@@ -22,6 +22,15 @@ const Formular = () => {
 	const recaptchaRef = useRef(null);
 	const [recaptchaValue, setRecaptchaValue] = useState(null);
 	const [isVerified, setIsVerified] = useState(false);
+	// Track if we're in the browser environment
+	const [isBrowser, setIsBrowser] = useState(false);
+	// Track submission attempts
+	const [submissionAttempts, setSubmissionAttempts] = useState(0);
+
+	// Set isBrowser to true once component mounts
+	useEffect(() => {
+		setIsBrowser(true);
+	}, []);
 
 	const handleClick = (event) => {
 		setAnchorEl(event.currentTarget);
@@ -30,6 +39,7 @@ const Formular = () => {
 	const handleClose = () => {
 		setAlert('');
 		setAnchorEl(null);
+		setSubmissionAttempts(0);
 	};
 
 	const validatePhone = (phoneNumber) => {
@@ -51,52 +61,96 @@ const Formular = () => {
 		setName('');
 		setEmail('');
 		setPhone('');
+		if (recaptchaRef.current) {
+			recaptchaRef.current.reset();
+		}
 		setRecaptchaValue(null);
 		setIsVerified(false);
+		setSubmissionAttempts(0);
 	};
 
 	const handleSubmit = async (event) => {
 		event.preventDefault();
+		setSubmissionAttempts((prev) => prev + 1);
 
 		try {
 			setLoading(true);
 
 			if (name === '' || email === '' || phone === '' || !isVerified) {
+				console.log('Form validation failed - missing required fields');
 				setAlert('error');
+				setLoading(false);
 				return;
 			}
 
 			if (!recaptchaValue) {
-				console.error('reCAPTCHA verification failed');
+				console.log('ReCAPTCHA verification failed');
 				setAlert('error');
+				setLoading(false);
 				return;
 			}
 
 			if (!validatePhone(phone)) {
-				console.error('Invalid phone number');
+				console.log('Invalid phone number:', phone);
 				setAlert('phone');
+				setLoading(false);
 				return;
 			}
 
-			const data = { name, email, phone, recaptchaValue };
+			if (!validateEmail(email)) {
+				console.log('Invalid email:', email);
+				setAlert('error');
+				setLoading(false);
+				return;
+			}
 
-			const res = await axios
-				.post('/api/contact', data, {
+			const data = {
+				name,
+				email,
+				phone,
+				recaptchaValue,
+				timestamp: new Date().toISOString(),
+				attempt: submissionAttempts,
+			};
+
+			console.log('Submitting form data:', data);
+
+			try {
+				// Add caching prevention headers and request ID for tracing
+				const res = await axios.post('/api/contact', data, {
 					headers: {
 						'Content-Type': 'application/json',
+						'Cache-Control':
+							'no-cache, no-store, max-age=0, must-revalidate',
+						Pragma: 'no-cache',
+						Expires: '0',
+						'X-Request-ID': `form-${Date.now()}-${Math.random()
+							.toString(36)
+							.substring(2, 15)}`,
 					},
-				})
-				.catch((error) => {
-					console.error('Axios request failed:', error);
-					throw error; // Rethrow the error to propagate it further
+					timeout: 15000, // 15 second timeout
 				});
 
-			if (res.status === 200) {
-				setAlert('success');
-				resetForm();
-				setTimeout(() => handleClose(), 1000);
-			} else {
-				console.error('Server error:', res.status);
+				console.log('Form submission response:', res.status, res.data);
+
+				if (res.status === 200) {
+					setAlert('success');
+					resetForm();
+					setTimeout(() => handleClose(), 2000);
+				} else {
+					console.error('Server error:', res.status, res.data);
+					setAlert('error');
+				}
+			} catch (axiosError) {
+				// Detailed error logging
+				console.error(
+					'Axios request failed:',
+					axiosError.message,
+					'Response data:',
+					axiosError.response?.data,
+					'Status:',
+					axiosError.response?.status,
+				);
 				setAlert('error');
 			}
 		} catch (error) {
@@ -108,12 +162,31 @@ const Formular = () => {
 	};
 
 	const handleCaptchaSubmission = (token) => {
+		console.log('ReCAPTCHA token received:', token ? 'valid' : 'invalid');
 		setRecaptchaValue(token);
 		setIsVerified(!!token);
 	};
 
 	const open = Boolean(anchorEl);
 	const id = open ? 'simple-popover' : undefined;
+
+	// Only render form if in browser environment
+	if (!isBrowser) {
+		return (
+			<IconButton
+				aria-label="Contact form"
+				variant="contained"
+				onClick={() => {}}>
+				<MailOutlineIcon fontSize="large" />
+			</IconButton>
+		);
+	}
+
+	// Get recaptcha key with fallback
+	const recaptchaKey =
+		process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY ||
+		process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ||
+		'';
 
 	return (
 		<div>
@@ -150,7 +223,7 @@ const Formular = () => {
 						variant="filled"
 						severity="error"
 						onClose={() => setAlert('')}>
-						Completează toate câmpurile!
+						Completează toate câmpurile corect!
 					</Alert>
 				)}
 				{alert === 'phone' && (
@@ -171,11 +244,18 @@ const Formular = () => {
 				<form
 					className="mx-3 flex flex-col justify-center"
 					onSubmit={handleSubmit}>
-					<ReCAPTCHA
-						sitekey={process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY}
-						ref={recaptchaRef}
-						onChange={handleCaptchaSubmission}
-					/>
+					{recaptchaKey && (
+						<ReCAPTCHA
+							sitekey={recaptchaKey}
+							ref={recaptchaRef}
+							onChange={handleCaptchaSubmission}
+						/>
+					)}
+					{!recaptchaKey && (
+						<Alert variant="outlined" severity="warning" className="mb-2">
+							reCAPTCHA key missing
+						</Alert>
+					)}
 					<TextField
 						type="text"
 						variant="outlined"
@@ -212,7 +292,7 @@ const Formular = () => {
 						}>
 						Trimite{' '}
 						{loading === true && (
-							<CircularProgress sx={{ marginLeft: 2 }} />
+							<CircularProgress size={24} sx={{ marginLeft: 2 }} />
 						)}
 					</Button>
 				</form>

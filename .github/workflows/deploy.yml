@@ -1,4 +1,4 @@
-name: Deploy to FTP
+name: Deploy to cPanel
 
 on:
   push:
@@ -11,32 +11,250 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: 20
+          cache: 'npm'
 
       - name: Install lftp
         run: |
           sudo apt-get update -y
           sudo apt-get install -y lftp
 
+      - name: Create .env.production file for build only
+        run: |
+          echo "Creating .env.production file for build process only..."
+          cat > .env.production << 'EOL'
+          # Only include NEXT_PUBLIC_ variables for build process
+          # Server-side variables should be set in cPanel
+          NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY=${{ secrets.RECAPTCHA_SITE_KEY }}
+          NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+          EOL
+
+      - name: Create server.js file
+        run: |
+          echo "Creating server.js file..."
+          cat > server.js << 'EOL'
+          const { createServer } = require('http');
+          const { parse } = require('url');
+          const next = require('next');
+
+          // Determine environment
+          const dev = process.env.NODE_ENV !== 'production';
+          const hostname = process.env.HOSTNAME || 'localhost';
+          const port = process.env.PORT || 3000;
+
+          // Create the Next.js app instance
+          const app = next({ dev, hostname, port });
+          const handle = app.getRequestHandler();
+
+          // Prepare the Next.js application
+          app.prepare().then(() => {
+            // Create HTTP server
+            const server = createServer(async (req, res) => {
+              try {
+                // Add CORS headers for API routes
+                if (req.url.startsWith('/api/')) {
+                  res.setHeader('Access-Control-Allow-Credentials', 'true');
+                  res.setHeader('Access-Control-Allow-Origin', '*');
+                  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+                  res.setHeader(
+                    'Access-Control-Allow-Headers',
+                    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+                  );
+                  
+                  // Handle preflight requests
+                  if (req.method === 'OPTIONS') {
+                    res.statusCode = 200;
+                    res.end();
+                    return;
+                  }
+                }
+
+                // Add cache control headers
+                res.setHeader('Cache-Control', 'no-store, max-age=0');
+                
+                // Parse URL
+                const parsedUrl = parse(req.url, true);
+                
+                // Let Next.js handle the request
+                await handle(req, res, parsedUrl);
+              } catch (err) {
+                console.error('Server error:', err);
+                res.statusCode = 500;
+                res.end('Internal Server Error');
+              }
+            });
+
+            // Start the server
+            server.listen(port, (err) => {
+              if (err) throw err;
+              
+              console.log(`> Ready on http://${hostname}:${port}`);
+              console.log(`> Environment: ${dev ? 'development' : 'production'}`);
+            });
+          });
+          EOL
+
+      - name: Create .htaccess file (without secrets)
+        run: |
+          echo "Creating .htaccess file..."
+          cat > .htaccess << 'EOL'
+          <IfModule mod_rewrite.c>
+            RewriteEngine On
+            RewriteRule ^$ http://127.0.0.1:3000/ [P,L]
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+          </IfModule>
+          
+          # Cache control headers
+          <FilesMatch "\.(html|htm|js|json)$">
+            <IfModule mod_headers.c>
+              Header set Cache-Control "no-cache, no-store, must-revalidate"
+              Header set Pragma "no-cache"
+              Header set Expires "0"
+            </IfModule>
+          </FilesMatch>
+          EOL
+
+      - name: Create .env.example file
+        run: |
+          echo "Creating .env.example file..."
+          cat > .env.example << 'EOL'
+          # .env.example - Do not put real values here!
+          # This file serves as a template for local development.
+          # In cPanel, set these values in the Node.js app environment variables section.
+
+          # Public variables (safe to be in client-side code)
+          NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+          NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY=your_google_maps_api_key
+
+          # Private server-side only variables (never expose these)
+          NEXT_PUBLIC_RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
+          EMAIL=your_email@domain.com
+          EMAIL_PASS=your_email_password
+          EOL
+
+      - name: Update package.json scripts
+        run: |
+          echo "Updating package.json scripts..."
+          npx json -I -f package.json -e 'this.scripts.start = "NODE_ENV=production node server.js"'
+
+      - name: Update next.config.js
+        run: |
+          echo "Updating next.config.js file..."
+          cat > next.config.js << 'EOL'
+          /** @type {import('next').NextConfig} */
+          const nextConfig = {
+            distDir: '.next',
+            // Keep these compiler options for better debugging
+            compiler: {
+              removeConsole: {
+                exclude: ['log', 'error', 'warn'],
+              },
+            },
+            // Add cache configuration to prevent cache-related issues
+            headers: async () => {
+              return [
+                {
+                  // Apply to all routes
+                  source: '/:path*',
+                  headers: [
+                    {
+                      key: 'Cache-Control',
+                      value: 'no-store, max-age=0',
+                    },
+                  ],
+                },
+                {
+                  // Apply to API routes
+                  source: '/api/:path*',
+                  headers: [
+                    {
+                      key: 'Cache-Control',
+                      value: 'no-store, no-cache, max-age=0, must-revalidate',
+                    },
+                  ],
+                },
+              ];
+            },
+            // Properly handle fonts and images
+            images: {
+              domains: ['localhost'],
+              unoptimized: false, // Use Next.js image optimization
+            },
+          };
+          
+          module.exports = nextConfig;
+          EOL
+
+      - name: Create .gitignore file
+        run: |
+          echo "Creating .gitignore file..."
+          cat > .gitignore << 'EOL'
+          # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+          # dependencies
+          /node_modules
+          /.pnp
+          .pnp.js
+
+          # testing
+          /coverage
+
+          # next.js
+          /.next/
+          /out/
+
+          # production
+          /build
+
+          # misc
+          .DS_Store
+          *.pem
+
+          # debug
+          npm-debug.log*
+          yarn-debug.log*
+          yarn-error.log*
+
+          # local env files
+          .env*.local
+          .env
+          .env.production
+
+          # vercel
+          .vercel
+
+          # typescript
+          *.tsbuildinfo
+          next-env.d.ts
+          EOL
+
       - name: Install dependencies and build Next.js app
         run: |
+          npm install dotenv
           npm install
           npm run build
 
-      - name: Debug FTP Connection
-        run: |
-          echo "FTP_HOST: ${{ secrets.FTP_HOST }}"
-          
       - name: Deploy via FTP
         run: |
-          lftp -e "open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ftp.smilevillage.ro; set ssl:verify-certificate no; mirror -R -e -x .git/ -x .github/ -x node_modules/ . /app/; bye"
+          lftp -e "open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }}; set ssl:verify-certificate no; mirror -R -e -x .git/ -x .github/ -x node_modules/ . /app/; bye"
 
-      - name: Debug Deployment
+      - name: Create deployment verification file
         run: |
-          echo "Current directory: $(pwd)"
-          echo "Files to deploy: $(ls -la)"
+          echo "Creating verification.html..."
+          echo "<!DOCTYPE html><html><head><title>Deployment Verification</title></head><body><h1>Deployment Timestamp: $(date)</h1></body></html>" > verification.html
+          lftp -e "open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }}; set ssl:verify-certificate no; put -O /app/ verification.html; bye"
+          
+      - name: Deployment complete notification
+        run: |
+          echo "Deployment completed successfully!"
+          echo "Now you need to:"
+          echo "1. Go to cPanel > Setup Node.js App"
+          echo "2. Configure your environment variables in the Node.js App settings"
+          echo "3. Use the 'Run NPM Script' option with 'start' as the script name"
