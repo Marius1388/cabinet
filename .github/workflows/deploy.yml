@@ -24,14 +24,18 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y lftp
 
-      - name: Create .env.production file for build only
+      - name: Create .env.local file with environment variables
         run: |
-          echo "Creating .env.production file for build process only..."
-          cat > .env.production << 'EOL'
-          # Only include NEXT_PUBLIC_ variables for build process
-          # Server-side variables should be set in cPanel
+          echo "Creating .env.local file..."
+          cat > .env.local << 'EOL'
+          # Public client-side variables
           NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY=${{ secrets.RECAPTCHA_SITE_KEY }}
           NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+          
+          # Server-side variables will be set in cPanel
+          # EMAIL=${{ secrets.EMAIL }}
+          # EMAIL_PASS=${{ secrets.EMAIL_PASS }}
+          # NEXT_PUBLIC_RECAPTCHA_SECRET_KEY=${{ secrets.RECAPTCHA_SECRET_KEY }}
           EOL
 
       - name: Create server.js file
@@ -41,6 +45,15 @@ jobs:
           const { createServer } = require('http');
           const { parse } = require('url');
           const next = require('next');
+          const path = require('path');
+          const fs = require('fs');
+
+          // Try to load .env.local if it exists for local variables
+          const envPath = path.resolve(process.cwd(), '.env.local');
+          if (fs.existsSync(envPath)) {
+            require('dotenv').config({ path: envPath });
+            console.log('Loaded environment variables from .env.local');
+          }
 
           // Determine environment
           const dev = process.env.NODE_ENV !== 'production';
@@ -95,6 +108,11 @@ jobs:
               
               console.log(`> Ready on http://${hostname}:${port}`);
               console.log(`> Environment: ${dev ? 'development' : 'production'}`);
+              
+              // Log public environment variables for debugging (without exposing values)
+              console.log('Environment variables loaded:');
+              console.log('- NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY:', process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY ? '[SET]' : '[MISSING]');
+              console.log('- NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY:', process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY ? '[SET]' : '[MISSING]');
             });
           });
           EOL
@@ -186,6 +204,11 @@ jobs:
             images: {
               domains: ['localhost'],
               unoptimized: false, // Use Next.js image optimization
+            },
+            // Make webpack print verbose errors for debugging
+            webpack: (config, { dev, isServer }) => {
+              config.stats = 'verbose';
+              return config;
             },
           };
           
