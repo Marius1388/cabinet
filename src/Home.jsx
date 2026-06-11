@@ -69,7 +69,7 @@ const Home = () => {
 					<h1 className="head_text green_gradient mb-4 animate-fade-in">
 						SmileVillage
 					</h1>
-					<h2 className="head_text mb-8 animate-fade-in">
+					<h2 className="mb-8 mt-2 animate-fade-in text-3xl font-bold leading-tight text-[var(--text-primary)] sm:text-5xl">
 						Cabinet Stomatologic <br /> Dr. Roxana Dancea
 					</h2>
 					<p className="desc mx-auto mb-8 max-w-2xl animate-fade-in">
@@ -89,7 +89,7 @@ const Home = () => {
 						</a>
 					</div>
 				</div>
-				<div className="absolute bottom-24 hidden -translate-x-1/2 animate-bounce-slow sm:bottom-10 sm:block">
+				<div className="absolute bottom-24 left-1/2 hidden -translate-x-1/2 animate-bounce-slow sm:bottom-10 sm:block">
 					<a
 						href="#despre-noi"
 						className="flex flex-col items-center text-gray-500 hover:text-primary">

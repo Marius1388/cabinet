@@ -1,49 +1,41 @@
 import React from 'react';
 
+const partners = [
+	{
+		href: 'https://www.madr.ro/dezvoltare-rurala.html',
+		src: '/assets/images/PNDR.jpg',
+		alt: 'PNDR',
+	},
+	{
+		href: 'https://www.afir.ro/',
+		src: '/assets/images/AFIR.jpg',
+		alt: 'AFIR',
+	},
+	{
+		href: 'https://www.gov.ro/',
+		src: '/assets/images/GUV.png',
+		alt: 'Guvernul Romaniei',
+	},
+	{
+		href: 'https://european-union.europa.eu/index_en',
+		src: '/assets/images/EU.png',
+		alt: 'EU website',
+	},
+];
+
 const Footer = () => {
 	return (
-		<footer>
-			<div className="z-50 flex w-full items-center space-x-4 pb-5 pr-4 ">
-				<a
-					href="https://www.madr.ro/dezvoltare-rurala.html"
-					target="_blank"
-					rel="noopener noreferrer">
-					<img
-						src="/assets/images/PNDR.jpg"
-						alt="PNDR"
-						className="h-16 w-auto md:h-24"
-					/>
-				</a>
-				<a
-					href="https://www.afir.ro/"
-					target="_blank"
-					rel="noopener noreferrer">
-					<img
-						src="/assets/images/AFIR.jpg"
-						alt="AFIR"
-						className="h-16 w-auto md:h-24"
-					/>
-				</a>
-				<a
-					href="https://www.gov.ro/"
-					target="_blank"
-					rel="noopener noreferrer">
-					<img
-						src="/assets/images/GUV.png"
-						alt="Guvernul Romaniei"
-						className="h-16 w-auto md:h-24"
-					/>
-				</a>
-				<a
-					href="https://european-union.europa.eu/index_en"
-					target="_blank"
-					rel="noopener noreferrer">
-					<img
-						src="/assets/images/EU.png"
-						alt="EU website"
-						className="h-16 w-auto md:h-24"
-					/>
-				</a>
+		<footer className="w-full">
+			<div className="flex w-full flex-wrap items-center justify-center gap-4 py-6 md:gap-8">
+				{partners.map((p) => (
+					<a
+						key={p.alt}
+						href={p.href}
+						target="_blank"
+						rel="noopener noreferrer">
+						<img src={p.src} alt={p.alt} className="h-16 w-auto md:h-24" />
+					</a>
+				))}
 			</div>
 		</footer>
 	);

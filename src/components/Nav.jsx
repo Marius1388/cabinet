@@ -40,21 +40,22 @@ const Nav = () => {
 	const navScrolledClasses =
 		'py-2 shadow-lg border-b border-gray-200 bg-gradient-to-r from-white/80 via-white/85 to-white/80 backdrop-filter backdrop-blur-md';
 
-	// For initial state, use a gradient with blur
+	// The hero behind the nav is light, so the initial state also needs
+	// dark text — just a lighter, borderless bar than the scrolled one
 	const navInitialClasses =
-		'py-4 bg-gradient-to-b from-black/60 via-black/40 to-transparent backdrop-filter backdrop-blur-sm';
+		'py-4 bg-gradient-to-b from-white/70 via-white/40 to-transparent backdrop-filter backdrop-blur-sm';
 
 	const linkBaseClasses = 'nav_link transition-colors duration-300';
-	const linkScrolledClasses = 'text-textColor-primary hover:text-primary';
-	const linkInitialClasses = 'text-white hover:text-gray-200';
+	const linkScrolledClasses = 'text-gray-800 hover:text-primary';
+	const linkInitialClasses = 'text-gray-700 hover:text-primary';
 
-	const logoTextColor = isScrolled ? 'text-primary' : 'text-white';
+	const logoTextColor = 'text-primary';
 
 	const ctaBaseClasses =
 		'btn rounded-full px-5 py-2 transition-all duration-300';
 	const ctaScrolledClasses = 'bg-primary text-white hover:bg-primary-dark';
 	const ctaInitialClasses =
-		'bg-white text-primary hover:bg-gray-100 shadow-sm';
+		'bg-primary text-white hover:bg-primary-dark shadow-sm';
 
 	return (
 		<nav
@@ -111,11 +112,7 @@ const Nav = () => {
 				<div className="md:hidden">
 					<button
 						onClick={toggleMobileMenu}
-						className={`rounded p-2 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-							isScrolled
-								? 'text-primary focus:ring-primary'
-								: 'text-white focus:ring-white'
-						}`}
+						className="rounded p-2 text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
 						aria-controls="mobile-menu"
 						aria-expanded={isMobileMenuOpen}
 						aria-label={
@@ -156,25 +153,25 @@ const Nav = () => {
 				<div className="container mx-auto flex flex-col space-y-1 px-5 pb-4 pt-2">
 					<ScrollLink
 						href="#despre-noi"
-						className="text-textColor-primary block py-2 transition-colors hover:text-primary"
+						className="text-gray-800 block py-2 transition-colors hover:text-primary"
 						onClick={closeMobileMenu}>
 						Despre noi
 					</ScrollLink>
 					<ScrollLink
 						href="#servicii"
-						className="text-textColor-primary block py-2 transition-colors hover:text-primary"
+						className="text-gray-800 block py-2 transition-colors hover:text-primary"
 						onClick={closeMobileMenu}>
 						Servicii
 					</ScrollLink>
 					<ScrollLink
 						href="#galerie"
-						className="text-textColor-primary block py-2 transition-colors hover:text-primary"
+						className="text-gray-800 block py-2 transition-colors hover:text-primary"
 						onClick={closeMobileMenu}>
 						Galerie
 					</ScrollLink>
 					<ScrollLink
 						href="#contact"
-						className="text-textColor-primary block py-2 font-medium transition-colors hover:text-primary"
+						className="text-gray-800 block py-2 font-medium transition-colors hover:text-primary"
 						onClick={closeMobileMenu}>
 						Contact
 					</ScrollLink>

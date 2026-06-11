@@ -26,27 +26,20 @@ const list = [
 const Servicii = () => {
 	return (
 		<StyledSection propId="servicii">
-			<h2 className="green_gradient text-3xl font-bold ">Servicii</h2>
+			<h2 className="green_gradient text-3xl font-bold">Servicii</h2>
 			{list.map((item, i) => (
 				<div key={i}>
-					<div className="my-3 flex items-center justify-between max-sm:flex-col md:flex-row">
+					<div className="my-4 flex flex-col items-center gap-2 md:flex-row md:justify-between md:gap-6">
 						<p className="desc text-center font-semibold uppercase md:w-1/3">
 							{item.name}
 						</p>
-						<p className="text-lg font-normal max-sm:text-justify md:w-2/3">
-							{item.description}{' '}
+						<p className="text-left text-lg font-normal md:w-2/3">
+							{item.description}
 						</p>
 					</div>
-					<hr
-						style={{
-							background: 'lightgreen',
-							color: 'lime',
-							borderColor: 'lime',
-							height: '2px',
-							width: '85%',
-							margin: '0 auto',
-						}}
-					/>
+					{i < list.length - 1 && (
+						<hr className="mx-auto h-0.5 w-[85%] border-0 bg-[var(--primary-light)]" />
+					)}
 				</div>
 			))}
 		</StyledSection>

@@ -31,10 +31,9 @@ const Contact = () => {
 			<div className="mt-4 flex flex-col items-center justify-center gap-6 md:flex-row md:justify-between">
 				<div className="md:w-1/2">
 					<p className="desc mt-3 text-center">
-						Ne găsiți în Traian Vuia, DN 68A,
-						<br /> nr. 31 &#128515;{' '}
+						Ne găsiți în Traian Vuia, DN 68A, nr. 31 &#128515;
 					</p>
-					<h1 className="mt-4 text-center text-xl font-bold">Program</h1>
+					<h3 className="mt-4 text-center text-xl font-bold">Program</h3>
 					<p className="mt-2 text-center text-lg font-medium">
 						Luni: 08.00-14.00
 					</p>
@@ -48,19 +47,14 @@ const Contact = () => {
 							<PhoneIcon /> +4 0720 894 803
 						</a>
 					</p>
-					<p className="desc mt-4 text-center">
-						Sună-ne! &#8593;
-						<br />
-						Sau trimite-ne un mesaj accesând
-					</p>
-					<div className="desc mt-2 flex flex-row flex-wrap items-center justify-center gap-2 text-center">
-						<p>iconița &#8594;</p>
+					<div className="desc mt-4 flex flex-row flex-wrap items-center justify-center gap-1 text-center">
+						<p>Sună-ne sau trimite-ne un mesaj:</p>
 						<Formular />
 					</div>
 				</div>
-				<div className="flex justify-center md:w-1/2">
+				<div className="flex w-full justify-center md:w-1/2">
 					{loadError && (
-						<div className="flex h-80 w-80 items-center justify-center rounded-lg border border-red-200 bg-red-50 p-4">
+						<div className="flex h-80 w-full max-w-md items-center justify-center rounded-lg border border-red-200 bg-red-50 p-4">
 							<p className="text-center text-red-600">
 								Unable to load Google Maps. Please try again later.
 							</p>
@@ -68,11 +62,11 @@ const Contact = () => {
 					)}
 
 					{!isLoaded && !loadError ? (
-						<div className="flex h-80 w-80 items-center justify-center rounded-lg bg-gray-100">
+						<div className="flex h-80 w-full max-w-md items-center justify-center rounded-lg bg-gray-100">
 							<p>Se încarcă harta...</p>
 						</div>
 					) : isLoaded && !loadError ? (
-						<div className="h-80 w-80 overflow-hidden rounded-lg shadow-md">
+						<div className="h-80 w-full max-w-md overflow-hidden rounded-lg shadow-md">
 							<GoogleMap
 								mapContainerStyle={{
 									width: '100%',

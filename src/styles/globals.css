@@ -169,6 +169,10 @@ h1, h2, h3, h4, h5, h6 {
   @apply bg-white text-[var(--primary-color)] border border-[var(--primary-color)] hover:bg-[var(--primary-light)] hover:text-white;
 }
 
+.btn-outline {
+  @apply bg-white/80 text-[var(--primary-color)] border border-[var(--primary-color)] hover:bg-[var(--primary-color)] hover:text-white shadow-md;
+}
+
 .card {
   @apply bg-white rounded-xl shadow-md p-6 transition-all hover:shadow-lg;
 }
