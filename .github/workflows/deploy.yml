@@ -4,269 +4,81 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      # Override these with repository variables if your FTP layout differs
+      SITE_DIR: ${{ vars.FTP_SITE_DIR || '/public_html' }}
+      API_DIR: ${{ vars.FTP_API_DIR || '/cabinet-api' }}
+      FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+      FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      FTP_HOST: ${{ secrets.FTP_HOST }}
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build static site
+        env:
+          VITE_GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+          VITE_RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
+        run: npm run build
 
       - name: Install lftp
         run: |
           sudo apt-get update -y
           sudo apt-get install -y lftp
 
-      - name: Create config directory and envConfig.js
+      # The static site goes to the document root. .htaccess is excluded so
+      # the CloudLinux Passenger block written by "Setup Node.js App" (which
+      # routes /api to the Node app) is never wiped by a deploy.
+      - name: Upload static site
         run: |
-          mkdir -p config
-          cat > config/envConfig.js << 'EOL'
-          // This approach loads API keys from environment variables at runtime,
-          // but provides fallbacks for when environment variables fail in production
-          export function getGoogleMapsApiKey() {
-            // First try environment variable
-            if (process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY) {
-              return process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY;
-            }
-            
-            // For production fallback, retrieve from window object if set
-            if (typeof window !== 'undefined' && window._env && window._env.MAPS_API_KEY) {
-              return window._env.MAPS_API_KEY;
-            }
-            
-            // Log the issue but don't provide an actual key
-            console.error('Google Maps API key not available');
-            return '';
-          }
+          lftp -e "
+            set ssl:verify-certificate no;
+            open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST;
+            mirror -R --delete --exclude-glob .htaccess dist/ $SITE_DIR;
+            bye
+          "
 
-          export function getRecaptchaSiteKey() {
-            // First try environment variable
-            if (process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY) {
-              return process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY;
-            }
-            
-            // For production fallback, retrieve from window object if set
-            if (typeof window !== 'undefined' && window._env && window._env.RECAPTCHA_SITE_KEY) {
-              return window._env.RECAPTCHA_SITE_KEY;
-            }
-            
-            // Log the issue but don't provide an actual key
-            console.error('reCAPTCHA site key not available');
-            return '';
-          }
-          EOL
-
-      - name: Create public directory if it doesn't exist
-        run: mkdir -p public
-
-      - name: Create runtime-config.js
+      # The contact API source goes to the Node app root (outside the
+      # document root). node_modules, .env and tmp/ live only on the server.
+      - name: Upload contact API
         run: |
-          cat > public/runtime-config.js << 'EOL'
-          // Runtime configuration for environment variables
-          window._env = {
-            MAPS_API_KEY: "${{ secrets.GOOGLE_MAPS_API_KEY }}",
-            RECAPTCHA_SITE_KEY: "${{ secrets.RECAPTCHA_SITE_KEY }}"
-          };
-          EOL
+          lftp -e "
+            set ssl:verify-certificate no;
+            open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST;
+            mirror -R --delete --exclude-glob node_modules/ --exclude-glob .env --exclude-glob tmp/ api/ $API_DIR;
+            bye
+          "
 
-      - name: Create .env.local file for build only
+      # Touching tmp/restart.txt makes Passenger reload the app with the
+      # newly uploaded code — no manual restart needed in cPanel.
+      - name: Restart Node app
         run: |
-          echo "Creating .env.local file..."
-          cat > .env.local << 'EOL'
-          # Public client-side variables
-          NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY=${{ secrets.RECAPTCHA_SITE_KEY }}
-          NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
-          
-          # Server-side variables will be set in cPanel
-          # EMAIL=${{ secrets.EMAIL }}
-          # EMAIL_PASS=${{ secrets.EMAIL_PASS }}
-          # NEXT_PUBLIC_RECAPTCHA_SECRET_KEY=${{ secrets.RECAPTCHA_SECRET_KEY }}
-          EOL
+          date > restart.txt
+          lftp -e "
+            set ssl:verify-certificate no;
+            open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST;
+            mkdir -p $API_DIR/tmp;
+            put -O $API_DIR/tmp restart.txt;
+            bye
+          "
 
-      - name: Create server.js file
+      - name: Done
         run: |
-          echo "Creating server.js file..."
-          cat > server.js << 'EOL'
-          const { createServer } = require('http');
-          const { parse } = require('url');
-          const next = require('next');
-          const path = require('path');
-          const fs = require('fs');
-
-          // Try to load .env.local if it exists for local variables
-          const envPath = path.resolve(process.cwd(), '.env.local');
-          if (fs.existsSync(envPath)) {
-            require('dotenv').config({ path: envPath });
-            console.log('Loaded environment variables from .env.local');
-          }
-
-          // Determine environment
-          const dev = process.env.NODE_ENV !== 'production';
-          const hostname = process.env.HOSTNAME || 'localhost';
-          const port = process.env.PORT || 3000;
-
-          // Create the Next.js app instance
-          const app = next({ dev, hostname, port });
-          const handle = app.getRequestHandler();
-
-          // Prepare the Next.js application
-          app.prepare().then(() => {
-            // Create HTTP server
-            const server = createServer(async (req, res) => {
-              try {
-                // Add CORS headers for API routes
-                if (req.url.startsWith('/api/')) {
-                  res.setHeader('Access-Control-Allow-Credentials', 'true');
-                  res.setHeader('Access-Control-Allow-Origin', '*');
-                  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-                  res.setHeader(
-                    'Access-Control-Allow-Headers',
-                    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-                  );
-                  
-                  // Handle preflight requests
-                  if (req.method === 'OPTIONS') {
-                    res.statusCode = 200;
-                    res.end();
-                    return;
-                  }
-                }
-
-                // Add cache control headers
-                res.setHeader('Cache-Control', 'no-store, max-age=0');
-                
-                // Parse URL
-                const parsedUrl = parse(req.url, true);
-                
-                // Let Next.js handle the request
-                await handle(req, res, parsedUrl);
-              } catch (err) {
-                console.error('Server error:', err);
-                res.statusCode = 500;
-                res.end('Internal Server Error');
-              }
-            });
-
-            // Start the server
-            server.listen(port, (err) => {
-              if (err) throw err;
-              
-              console.log(`> Ready on http://${hostname}:${port}`);
-              console.log(`> Environment: ${dev ? 'development' : 'production'}`);
-              
-              // Log public environment variables for debugging (without exposing values)
-              console.log('Environment variables loaded:');
-              console.log('- NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY:', process.env.NEXT_PUBLIC_LOCALHOST_RECAPTCHA_SITE_KEY ? '[SET]' : '[MISSING]');
-              console.log('- NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY:', process.env.NEXT_PUBLIC_REACT_APP_GOOGLE_API_KEY ? '[SET]' : '[MISSING]');
-            });
-          });
-          EOL
-
-      - name: Create .htaccess file (without secrets)
-        run: |
-          echo "Creating .htaccess file..."
-          cat > .htaccess << 'EOL'
-          <IfModule mod_rewrite.c>
-            RewriteEngine On
-            RewriteRule ^$ http://127.0.0.1:3000/ [P,L]
-            RewriteCond %{REQUEST_FILENAME} !-f
-            RewriteCond %{REQUEST_FILENAME} !-d
-            RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
-          </IfModule>
-          
-          # Cache control headers
-          <FilesMatch "\.(html|htm|js|json)$">
-            <IfModule mod_headers.c>
-              Header set Cache-Control "no-cache, no-store, must-revalidate"
-              Header set Pragma "no-cache"
-              Header set Expires "0"
-            </IfModule>
-          </FilesMatch>
-          EOL
-
-      - name: Update package.json scripts
-        run: |
-          echo "Updating package.json scripts..."
-          npx json -I -f package.json -e 'this.scripts.start = "NODE_ENV=production node server.js"'
-
-      - name: Update next.config.js
-        run: |
-          echo "Updating next.config.js file..."
-          cat > next.config.js << 'EOL'
-          /** @type {import('next').NextConfig} */
-          const nextConfig = {
-            distDir: '.next',
-            // Keep these compiler options for better debugging
-            compiler: {
-              removeConsole: false, // Keep all console logs for debugging
-            },
-            // Add cache configuration to prevent cache-related issues
-            headers: async () => {
-              return [
-                {
-                  // Apply to all routes
-                  source: '/:path*',
-                  headers: [
-                    {
-                      key: 'Cache-Control',
-                      value: 'no-store, max-age=0',
-                    },
-                  ],
-                },
-                {
-                  // Apply to API routes
-                  source: '/api/:path*',
-                  headers: [
-                    {
-                      key: 'Cache-Control',
-                      value: 'no-store, no-cache, max-age=0, must-revalidate',
-                    },
-                  ],
-                },
-              ];
-            },
-            // Properly handle fonts and images
-            images: {
-              domains: ['localhost'],
-              unoptimized: false, // Use Next.js image optimization
-            },
-            // Make webpack print verbose errors for debugging
-            webpack: (config, { dev, isServer }) => {
-              config.stats = 'verbose';
-              return config;
-            },
-          };
-          
-          module.exports = nextConfig;
-          EOL
-
-      - name: Install dependencies and build Next.js app
-        run: |
-          npm install dotenv
-          npm install
-          npm run build
-
-      - name: Deploy via FTP
-        run: |
-          lftp -e "open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }}; set ssl:verify-certificate no; mirror -R -e -x .git/ -x .github/ -x node_modules/ . /app/; bye"
-
-      - name: Create deployment verification file
-        run: |
-          echo "Creating verification.html..."
-          echo "<!DOCTYPE html><html><head><title>Deployment Verification</title></head><body><h1>Deployment Timestamp: $(date)</h1></body></html>" > verification.html
-          lftp -e "open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_HOST }}; set ssl:verify-certificate no; put -O /app/ verification.html; bye"
-          
-      - name: Deployment complete notification
-        run: |
-          echo "Deployment completed successfully!"
-          echo "Now you need to:"
-          echo "1. Go to cPanel > Setup Node.js App"
-          echo "2. Configure your environment variables in the Node.js App settings"
-          echo "3. Use the 'Run NPM Script' option with 'start' as the script name"
+          echo "Static site deployed to $SITE_DIR, API to $API_DIR."
+          echo "If api/package.json changed, run 'NPM Install' once in cPanel > Setup Node.js App."
