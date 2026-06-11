@@ -1,4 +1,3 @@
-'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import Popover from '@mui/material/Popover';

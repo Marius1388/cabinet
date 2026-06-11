@@ -1,4 +1,3 @@
-'use client';
 import React, { useEffect } from 'react';
 import DespreNoi from '@components/DespreNoi';
 import Servicii from '@components/Servicii';
@@ -90,7 +89,6 @@ const Home = () => {
 						</a>
 					</div>
 				</div>
-				{/* Fixed the bottom position and added responsive classes to hide on small screens */}
 				<div className="absolute bottom-24 hidden -translate-x-1/2 animate-bounce-slow sm:bottom-10 sm:block">
 					<a
 						href="#despre-noi"

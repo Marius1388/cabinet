@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer');
-require('dotenv').config({ path: '.env.local' });
 
 const email = process.env.EMAIL;
 const pass = process.env.EMAIL_PASS;

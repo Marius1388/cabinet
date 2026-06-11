@@ -1,14 +1,16 @@
-'use client';
 import React from 'react';
-import Link from 'next/link';
 
-const ScrollLink = ({ children, className, ...props }) => {
+const ScrollLink = ({ children, className, href, ...props }) => {
 	const handleScroll = (e) => {
 		e.preventDefault();
 		const targetId = e.currentTarget.href.replace(/.*\#/, '');
 		const elem = document.getElementById(targetId);
 
-		if (!elem) return;
+		if (!elem) {
+			// '#top' has no element — scroll to the top of the page
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+			return;
+		}
 
 		const navHeight = document.querySelector('nav').offsetHeight;
 		const offset = navHeight + 20;
@@ -23,9 +25,9 @@ const ScrollLink = ({ children, className, ...props }) => {
 	};
 
 	return (
-		<Link {...props} onClick={handleScroll} className={className}>
+		<a {...props} href={href} onClick={handleScroll} className={className}>
 			{children}
-		</Link>
+		</a>
 	);
 };
 

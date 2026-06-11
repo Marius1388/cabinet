@@ -1,26 +1,15 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
-/node_modules
+node_modules/
 /.pnp
 .pnp.js
 
-# testing
-/coverage
-
-# next.js
-/.next/
-
-# Optional: Any zip files you created manually
-*.zip
-/out/
-
-# production
-/build
+# build output
+/dist
 
 # misc
 .DS_Store
 *.pem
+*.zip
 
 # debug
 npm-debug.log*
@@ -28,11 +17,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+api/.env
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# windows
+bash.exe.stackdump
