@@ -42,15 +42,17 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y lftp
 
-      # The static site goes to the document root. .htaccess is excluded so
-      # the CloudLinux Passenger block written by "Setup Node.js App" (which
-      # routes /api to the Node app) is never wiped by a deploy.
+      # The static site goes to the document root. Two paths are excluded so
+      # the CloudLinux Passenger config written by "Setup Node.js App" is
+      # never wiped by a deploy: the docroot .htaccess, and the api/
+      # directory (for an app registered at /api, CloudLinux creates a
+      # physical public_html/api/.htaccess holding the Passenger block).
       - name: Upload static site
         run: |
           lftp -e "
             set ssl:verify-certificate no;
             open -u $FTP_USERNAME,$FTP_PASSWORD $FTP_HOST;
-            mirror -R --delete --exclude-glob .htaccess dist/ $SITE_DIR;
+            mirror -R --delete --exclude-glob .htaccess -x ^api/ dist/ $SITE_DIR;
             bye
           "
 
