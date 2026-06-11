@@ -261,7 +261,7 @@ workflow.
 ### The `.htaccess` rule — the heart of the fix
 
 On CloudLinux/cPanel hosting, "Setup Node.js App" works by writing a block
-into the **document root's `.htaccess`**:
+of Passenger directives into an `.htaccess` file:
 
 ```apache
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
@@ -271,15 +271,86 @@ PassengerNodejs "/home/smilevil/nodevenv/cabinet-api/20/bin/node"
 ...
 ```
 
-That block **is** the routing for `/api`. If CI ever mirrors over
-`.htaccess`, the API silently dies until someone restores it by hand — this
-is almost certainly what the old "copy files manually after each deploy"
-ritual was repairing. The new workflow therefore treats `.htaccess` as
-server-owned state and never uploads or deletes it.
+That block **is** the routing for `/api`. If CI ever mirrors over it, the
+API silently dies until someone restores it by hand — this is almost
+certainly what the old "copy files manually after each deploy" ritual was
+repairing. The new workflow therefore treats `.htaccess` as server-owned
+state and never uploads or deletes it.
+
+**Where exactly that block lives depends on the Application URL** — and
+this subtlety caused a real outage (see the post-mortem below):
+
+| Application URL | Where CloudLinux puts the Passenger block |
+| --- | --- |
+| `/` (domain root) | `public_html/.htaccess` |
+| `/api` | a **physical directory** `public_html/api/` containing its own `.htaccess` |
+
+So for an app mounted at `/api`, the document root contains a real `api/`
+folder that exists *only* to hold routing config. It looks like leftover
+junk. It is not.
 
 **Lesson:** in any deploy pipeline, list which files are owned by CI and
 which are owned by the server, and make the pipeline physically incapable of
-touching the server-owned ones.
+touching the server-owned ones — including the ones you don't know about
+yet. A `mirror --delete` against a directory something else also writes to
+is a loaded gun.
+
+### Post-mortem: the deploy that deleted its own API routing
+
+A day-one incident, worth recording in detail because every part of it is
+instructive.
+
+**What happened.** The workflow's site upload was
+`mirror -R --delete --exclude-glob .htaccess dist/ /public_html`. The
+exclusion protected the *top-level* `.htaccess` — but after the app URL was
+changed from `/` to `/api`, the Passenger block no longer lived there. It
+lived in `public_html/api/.htaccess` (see table above). `dist/` contains no
+`api/` directory, so `--delete` faithfully removed the "stale"
+`public_html/api/` folder — destroying the API routing. The deploy reported
+**success**; nothing was watching `/api` afterwards, so the breakage was
+only noticed on the next manual check.
+
+**The symptom chain** (each response body narrows the diagnosis):
+
+| `/api/health` returns | Meaning |
+| --- | --- |
+| Express JSON (`{"status":"ok",...}`) | everything works |
+| LiteSpeed **503** | Passenger routing exists, but the app can't start (no `node_modules`, crash on boot, wrong startup file) |
+| LiteSpeed **404** | Passenger routing is **gone** — nothing owns `/api` anymore |
+
+The 404 was the tell: a failing app gives 503, a missing route gives 404.
+
+**The secondary damage.** With `public_html/api/.htaccess` deleted, the
+CloudLinux Node.js selector itself broke — pressing *Stop App* threw a
+Python `FileNotFoundError` for that exact path, because stopping works by
+*reading and rewriting* the `.htaccess` it believes it owns. The tooling's
+own state had been deleted out from under it.
+
+**The repair** (in this order):
+
+1. Fix the workflow *first*, so the next push can't re-break the repair:
+   the site mirror now also excludes the `api/` directory
+   (`-x ^api/` alongside `--exclude-glob .htaccess`).
+2. Recreate the file the selector expects: in File Manager, make the
+   `public_html/api/` folder and an **empty** `.htaccess` inside it. This
+   un-wedges Stop/Start.
+3. **Stop App → Start App** (or edit + Save) so the selector regenerates
+   the full Passenger block into that file.
+4. Verify `/api/health` from outside.
+
+**Lessons:**
+
+- An exclusion rule protects only the paths you listed, not the concept you
+  meant ("server-owned routing config"). When the platform moved the config,
+  the rule silently stopped covering it.
+- "Deploy succeeded" ≠ "site works". The workflow exits green if the upload
+  succeeds; only an end-to-end probe (`/api/health`) proves the system
+  works. Check it after deploys that touch anything near the API.
+- GUI tools that store state in files you also manage (here: `.htaccess`)
+  can be corrupted by your automation, and then fail in confusing ways
+  (a Python traceback from a button click). When a platform tool errors on
+  a missing file, recreating that file — even empty — is often enough to
+  un-wedge it.
 
 ### Go-live debugging (a worked example)
 
@@ -326,3 +397,5 @@ endpoint; Sent folder). That's faster than changing things and hoping.
 | Change public keys (Maps/reCAPTCHA site) | update GitHub secret, re-run the workflow |
 | Change email creds / reCAPTCHA secret | update env vars in cPanel → Setup Node.js App → restart app |
 | API logs | `cabinet-api/stderr.log` via File Manager |
+| `/api` returns LiteSpeed 404 | Passenger routing lost — see the post-mortem above: recreate `public_html/api/.htaccess` (empty), Stop + Start the app |
+| After any deploy | sanity-check https://smilevillage.ro/api/health — green CI alone doesn't prove the API works |

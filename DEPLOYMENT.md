@@ -38,9 +38,17 @@ No manual file copying after a deploy.
 4. Push to `main` once (or run the workflow manually) so `cabinet-api/` gets
    populated, then press **Run NPM Install** in the Node app screen.
    Repeat this button only when `api/package.json` changes.
-5. **`.htaccess`**: cPanel adds a `CLOUDLINUX PASSENGER CONFIGURATION` block
-   to `public_html/.htaccess` when you create the app — keep it. Optionally
-   merge in `deploy/htaccess.example` (SPA fallback + asset caching).
+5. **`.htaccess`**: when the app URL is `/api`, cPanel creates a physical
+   `public_html/api/` directory whose `.htaccess` holds the
+   `CLOUDLINUX PASSENGER CONFIGURATION` block — that directory is routing
+   config, not leftovers; never delete it (the deploy workflow explicitly
+   excludes it). Optionally merge `deploy/htaccess.example` into
+   `public_html/.htaccess` (SPA fallback + asset caching).
+   If `/api/*` ever returns a LiteSpeed 404 and the Node selector errors
+   with `FileNotFoundError: .../public_html/api/.htaccess`, recreate that
+   folder with an empty `.htaccess`, then Stop + Start the app to
+   regenerate the block (see the post-mortem in
+   docs/MIGRATION-WALKTHROUGH.md).
 6. Verify: `https://<your-domain>/api/health` should return
    `{"status":"ok","email":"set","recaptcha":"set"}`.
 
