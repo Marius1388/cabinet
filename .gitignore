@@ -23,3 +23,4 @@ api/.env
 
 # windows
 bash.exe.stackdump
+scripts/shots/
