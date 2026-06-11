@@ -1,0 +1,27 @@
+# One-time setup: merge this into public_html/.htaccess on cPanel.
+#
+# IMPORTANT: when you create the Node app in "Setup Node.js App" with
+# application URL /api, cPanel adds a "CLOUDLINUX PASSENGER CONFIGURATION"
+# block to this same .htaccess. Keep that block — it is what routes /api
+# to the contact API. The GitHub deploy never touches .htaccess.
+
+# Serve the SPA for any path that is not a real file or directory.
+# /api is excluded; Passenger handles it.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_URI} !^/api/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# Vite build assets have content hashes in their names, so they can be
+# cached forever. HTML must always be revalidated so a new deploy shows up.
+<IfModule mod_headers.c>
+  <FilesMatch "assets/.*\.(js|css|woff2?)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
